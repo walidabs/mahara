@@ -73,17 +73,6 @@
                 // add the wired up header to the new block
                 newblock.prepend(oldheader);
             }
-            $('.blockinstance-header', newblock).on("mousedown", function() {
-                    $('.js-col-row .column-content').each(function() {
-                        $(this).addClass('block-drop-on', 100);
-                    });
-                });
-
-            $('.blockinstance-header', newblock).on("mouseup", function() {
-                $('.js-col-row .column-content').each(function() {
-                    $(this).removeClass('block-drop-on', 500);
-                });
-            });
 
             swapNodes(oldblock.get()[0], newblock.get()[0]); // using DOM objects, not jQuery objects so we needn't worry about IDs
 
@@ -508,7 +497,7 @@
                 }
             });
 
-            addblockdialog.find('h4.modal-title').text(get_string('addnewblock', 'view', element.text()));
+            addblockdialog.find('.modal-title').text(get_string('addnewblock', 'view', element.text()));
             addblockdialog.find('.block-inner').removeClass('d-none');
 
             addblockdialog.find('.deletebutton').trigger("focus");

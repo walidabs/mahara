@@ -134,7 +134,7 @@ function license_form_el_advanced($artefact, $prefix = '') {
         'type'        => 'fieldset',
         'collapsible' => true,
         'collapsed'   => true,
-        'class'       => 'last with-formgroup',
+        'class'       => 'first last with-formgroup',
         'legend'      => get_string('licensingadvanced'),
         'elements'    => array(
             $prefix . 'licensor' => array(
@@ -234,7 +234,7 @@ function license_form_files($prefix, $prefix2=null) {
         $rendered['license_advanced']['elements'][$prefix . '_licensor'],
         $rendered['license_advanced']['elements'][$prefix . '_licensorurl'],
     ) as $e) {
-        $helphtml = preg_replace('/files_filebrowser_(edit_)?licens/', 'licens', $e['helphtml']);
+        $helphtml = preg_replace('/\&quot\;\w+_filebrowser_(edit_)?licens/', '&quot;licens', $e['helphtml']);
         $html .= '<div class="form-group'.' '.$rowattr.'">' . $e['labelhtml'] . '' .
                  '' . $e['html'] . $helphtml . '</div>';
         $rowattr = '';

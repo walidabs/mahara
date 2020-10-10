@@ -1407,7 +1407,36 @@ class ActivityTypeViewAccess extends ActivityType {
             }
             throw new ViewNotFoundException(get_string('viewnotfound', 'error', $this->view));
         }
+        if ($this->views && $this->views[0] && $this->views[0]['collection_id']) {
+            require_once('collection.php');
+            if (!$collectioninfo = new Collection($this->views[0]['collection_id'])) {
+                if (!empty($this->cron)) { // probably deleted already
+                    return;
+                }
+                throw new ViewNotFoundException(get_string('collectionnotfound', 'error', $this->views[0]['collection_id']));
+            }
+        }
+
+        // default url
         $this->url = 'view/sharedviews.php';
+        // if we are dealing with one portfolio update url to go to that portfolio page
+        if (!$this->views) {
+            //we are dealing with a single page
+            $this->url = get_config('wwwroot') . 'view/view.php?id=' . $this->view;
+            $this->add_urltext(array('key' => 'Portfolio', 'section' => 'view'));
+        }
+        else {
+            // check to see if it's just one collection
+            if ($collectionids = array_column($this->views, 'collection_id')) {
+                if (count(array_unique($collectionids)) === 1) {
+                    if ($this->views[0]['collection_url']) {
+                        $this->url = $this->views[0]['collection_url'];
+                        $this->add_urltext(array('key' => 'Collection', 'section' => 'view'));
+                    }
+                }
+            }
+        }
+
         $this->users = array_diff_key(
             activity_get_viewaccess_users($this->view),
             $this->oldusers
@@ -1421,7 +1450,7 @@ class ActivityTypeViewAccess extends ActivityType {
 
     public function get_subject($user) {
         $subject = get_string('newaccessubjectdefault', 'activity');
-        if ($titles = $this->get_view_titles_urls()) {
+        if ($titles = $this->get_view_titles_urls($user)) {
             //covers collection(s), page(s) and combination of both
             if ($this->ownername) {
                 $subject = get_string('newaccesssubjectname', 'activity', count($titles), $this->ownername);
@@ -1462,7 +1491,7 @@ class ActivityTypeViewAccess extends ActivityType {
         return $accessdatemessage;
     }
 
-    public function get_view_titles_urls() {
+    public function get_view_titles_urls($user) {
         $items = array();
         if (!empty($this->views)) {
             //handle collection(s), page(s) and combination of both
@@ -1470,16 +1499,24 @@ class ActivityTypeViewAccess extends ActivityType {
             foreach ($views as $view) {
                 if ($view['collection_id']) {
                     //collections
+                    $url = $view['collection_url'];
+                    if (get_config('emailexternalredirect')) {
+                        $url = append_email_institution($user, $url);
+                    }
                     $items[$view['collection_id']] = [
                         'name' => $view['collection_name'],
-                        'url'  => $view['collection_url'],
+                        'url'  => $url,
                     ];
                 }
                 else {
                     //pages outside of collections
+                    $url = get_config('wwwroot') . 'view/view.php?id=' . $view['id'];
+                    if (get_config('emailexternalredirect')) {
+                        $url = append_email_institution($user, $url);
+                    }
                     $items[$view['id']] = [
                         'name' => $view['title'],
-                        'url' => get_config('wwwroot') . 'view/view.php?id=' . $view['id'],
+                        'url' => $url,
                     ];
                }
             }
@@ -1488,43 +1525,50 @@ class ActivityTypeViewAccess extends ActivityType {
         return false;
     }
 
-    public function _getmessage($user) {
+    public function _getmessage($user, $template) {
         $accessitems = array();
-        if ($items = $this->get_view_titles_urls()) {
+        if ($items = $this->get_view_titles_urls($user)) {
             $accessitems = $items;
         }
         else {
             //we are dealing with a single page
+            $url = get_config('wwwroot') . 'view/view.php?id=' . $this->view;
+            if (get_config('emailexternalredirect')) {
+                $url = append_email_institution($user, $url);
+            }
             $accessitems[$this->view] = [
                 'name' => $this->title,
-                'url' => get_config('wwwroot') . 'view/view.php?id=' . $this->view,
+                'url' => $url,
             ];
         }
         $accessdatemessage = ($this->view && $user->id) ? $this->get_view_access_message($user) : null;
         $prefurl = get_config('wwwroot') . 'account/activity/preferences/index.php';
+        if (get_config('emailexternalredirect')) {
+            $prefurl = append_email_institution($user, $prefurl);
+        }
         $sitename = get_config('sitename');
 
         $smarty = smarty_core();
         $smarty->assign('accessitems', $accessitems);
         $smarty->assign('accessdatemsg', $accessdatemessage . "\n");
-        $smarty->assign('url', get_config('wwwroot') . $this->url);
+        $smarty->assign('url', (get_config('emailexternalredirect') ? append_email_institution($user, $this->url) : $this->url));
         $smarty->assign('sitename', $sitename);
         $smarty->assign('prefurl', $prefurl);
-        $messagebody = $smarty->fetch('account/activity/access.tpl');
+        $messagebody = $smarty->fetch($template);
 
         return $messagebody;
     }
 
     public function get_message($user) {
-        return strip_tags($this->_getmessage($user));
+        return strip_tags($this->_getmessage($user, 'account/activity/accessinternal.tpl'));
     }
 
     public function get_emailmessage($user) {
-        return strip_tags($this->_getmessage($user));
+        return strip_tags($this->_getmessage($user, 'account/activity/accessemail.tpl'));
     }
 
     public function get_htmlmessage($user) {
-        return $this->_getmessage($user);
+        return $this->_getmessage($user, 'account/activity/accessemail.tpl');
     }
 
     public function get_required_parameters() {
@@ -1778,4 +1822,20 @@ function get_special_notifications($user, $activitytypes) {
     }
 
     return $activitytypes;
+}
+
+function append_email_institution($user, $url) {
+    if (!isset($user->id) || (isset($user->id) && empty($user->id))) {
+        return $url;
+    }
+    // Ignore auth methods 'internal' and 'ldap' as they login direct with login box
+    $local = array('internal', 'ldap');
+    if ($auth = get_field_sql("SELECT ai.id
+                                FROM {usr} u
+                                JOIN {auth_instance} ai ON ai.id = u.authinstance
+                                AND ai.authname NOT IN (" . join(',',  array_map('db_quote', $local)) . ")
+                                AND u.id = ?", array($user->id))) {
+        $url .= (strpos($url, '?') === false ? '?' : '&') . 'authid=' . $auth;
+    }
+    return $url;
 }

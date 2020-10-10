@@ -3,7 +3,7 @@
     <div class="card-body flush">
     {/if}
     {if $profileiconpath}
-        <div class="user-icon float-right">
+        <div class="user-icon float-right user-icon-60">
             <img src="{$profileiconpath}" alt="{$profileiconalt}" />
         </div>
     {/if}
@@ -13,12 +13,12 @@
     {if is_array($profileinfo.internalprofiles) && count($profileinfo.internalprofiles) > 0}
         <ul class="unstyled profile-info">
         {foreach from=$profileinfo.internalprofiles key=key item=item}
-            <li><strong>{str tag=$item.type section=artefact.internal}:</strong> {$item.description|clean_html|safe}</li>
+            <li><strong>{get_desired_field_title($item.type)}:</strong> {$item.description|clean_html|safe}</li>
         {/foreach}
         </ul>
     {/if}
     {if $profileinfo.socialprofiles}
-        <h4 class="sr-only">{str tag=socialprofiles section=artefact.internal}</h4>
+        <h3 class="sr-only">{str tag=socialprofiles section=artefact.internal}</h3>
         <ul class="unstyled profile-info">
         {foreach from=$profileinfo.socialprofiles item=item}
             <li><strong>{$item.description}:</strong>

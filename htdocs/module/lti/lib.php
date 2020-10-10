@@ -33,20 +33,29 @@ class PluginModuleLti extends PluginModule {
             $field = new XMLDBField('resourcelinkid');
             if (field_exists($table, $field)) {
                 $index = new XMLDBIndex('resourcelinkididx');
-                $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('resourcelinkid' . $mysqlsuffix));
-                add_index($table, $index);
+                $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('resourcelinkid'));
+                if (!index_exists($table, $index)) {
+                    $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('resourcelinkid' . $mysqlsuffix));
+                    add_index($table, $index);
+                }
             }
             $field = new XMLDBField('contextid');
             if (field_exists($table, $field)) {
                 $index = new XMLDBIndex('contextididx');
-                $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('contextid' . $mysqlsuffix));
-                add_index($table, $index);
+                $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('contextid'));
+                if (!index_exists($table, $index)) {
+                    $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('contextid' . $mysqlsuffix));
+                    add_index($table, $index);
+                }
             }
             $field = new XMLDBField('listresultsourceid');
             if (field_exists($table, $field)) {
-                $index = new XMLDBIndex('lisresultsourceididx');
-                $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('lisresultsourceid' . $mysqlsuffix));
-                add_index($table, $index);
+                $index = new XMLDBIndex('listresultsourceididx');
+                $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('listresultsourceid'));
+                if (!index_exists($table, $index)) {
+                    $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('listresultsourceid' . $mysqlsuffix));
+                    add_index($table, $index);
+                }
             }
         }
 
@@ -232,12 +241,18 @@ class PluginModuleLti extends PluginModule {
     // @return array of fields not needed with key the field name
     public static function disable_webservice_fields() {
         $fields = array (
-            'application_uri' => 1,
             'callback_uri' => 1
         );
         return $fields;
     }
 
+    // Update $new_app array to set / unset things not needed by this plugin
+    // @return Updated $new_app array
+    public static function add_application($new_app) {
+        $new_app['application_uri'] = '';
+        $new_app['callback_uri'] = null;
+        return $new_app;
+    }
 
     /**
      * Form for submitting collections/pages for lti assessessment

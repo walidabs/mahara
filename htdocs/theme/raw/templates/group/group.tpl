@@ -1,9 +1,9 @@
 <div id="grouplist_{$group->id}" class="list-group-item {if $group->membershiptype == 'invite' || $group->membershiptype == 'request' || $group->requests} list-group-item-warning{/if}">
     <div class="row">
         <div class="col-md-8">
-            <h3 class="list-group-item-heading text-inline">
+            <h2 class="list-group-item-heading text-inline">
                 <a href="{$group->homeurl}">{$group->name}</a>
-            </h3>
+            </h2>
             {if $group->settingsdescription}
             <span class="text-midtone">
                 - {$group->settingsdescription}
@@ -18,7 +18,7 @@
             <div class="groupsdetails text-small">
                 {if $group->editwindow}
                 <div class="groupeditable">
-                    {str tag=editable section=group}:
+                    <strong>{str tag=editable section=group}:</strong>
                     {$group->editwindow}
                 </div>
                 {/if}
@@ -36,7 +36,7 @@
                 {if $group->membercount}
                     <div class="membernumber">
                         <a href="{$WWWROOT}group/members.php?id={$group->id}" class="inner-link">
-                            {str tag=Members section=group}: {$group->membercount}
+                            <strong>{str tag=Members section=group}:</strong> {$group->membercount}
                         </a>
                     </div>
                 {/if}

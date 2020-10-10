@@ -1696,6 +1696,7 @@ function xmldb_core_upgrade($oldversion=0) {
                 }
                 $skinobj->set('viewskin', $viewskin);
                 $skinobj->commit();
+                set_time_limit(30);
             }
         }
     }
@@ -1852,6 +1853,107 @@ function xmldb_core_upgrade($oldversion=0) {
             $key = new XMLDBKEY('submittedhostfk');
             $key->setAttributes(XMLDB_KEY_FOREIGN, array('submittedhost'), 'host', array('wwwroot'));
             drop_key($table, $key);
+        }
+    }
+
+    if ($oldversion < 2020063000) {
+        log_debug('create client_connections_config table to hold extra configuration information');
+        $table = new XMLDBTable('client_connections_institution');
+        if (table_exists($table)) {
+            $field = new XMLDBField('id');
+            $field->setAttributes(XMLDB_TYPE_INTEGER, 10, null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            change_field_unsigned($table, $field);
+            if (!is_mysql()) {
+                log_debug('Adding primary key index back after editing id column');
+                $key = new XMLDBKey('primary');
+                $key->setAttributes(XMLDB_KEY_PRIMARY, array('id'));
+                add_key($table, $key);
+            }
+        }
+        $table = new XMLDBTable('client_connections_config');
+        if (!table_exists($table)) {
+            $table->addFieldInfo('id', XMLDB_TYPE_INTEGER, 10, XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->addFieldInfo('connection', XMLDB_TYPE_INTEGER, 10, false, XMLDB_NOTNULL);
+            $table->addFieldInfo('field', XMLDB_TYPE_CHAR, 100, null, XMLDB_NOTNULL);
+            $table->addFieldInfo('value', XMLDB_TYPE_TEXT, 'small', null, XMLDB_NOTNULL);
+            $table->addKeyInfo('primary', XMLDB_KEY_PRIMARY, array('id'));
+            $table->addKeyInfo('ccifk', XMLDB_KEY_FOREIGN, array('connection'), 'client_connections_institution', array('id'));
+            create_table($table);
+        }
+    }
+
+    // set customethemeupdate to true for Bug 1893159s
+    if ($oldversion < 2020083100) {
+        $custom_themes = get_records_sql_array("SELECT name FROM {institution} WHERE theme = ?", array('custom'));
+        if ($custom_themes) {
+            // set_config_institution requires the Institution class.
+            require_once(get_config('docroot') . 'lib/institution.php');
+            foreach ($custom_themes as $inst) {
+                set_config_institution($inst->name, 'customthemeupdate', true);
+            }
+        }
+    }
+
+    if ($oldversion < 2020091000) {
+        log_debug('Adding unique key to tag table');
+        $table = new XMLDBTable('tag');
+        // Add the new unique index
+        $index = new XMLDBIndex('taguk');
+        $index->setAttributes(XMLDB_INDEX_UNIQUE, array('tag', 'resourcetype', 'resourceid'));
+        if (!index_exists($table, $index)) {
+            // make sure there are no doubleups in tags
+            if ($taginfo = get_records_sql_array("SELECT tag, resourcetype, resourceid, ownertype, ownerid
+                                                   FROM {tag}
+                                                   GROUP BY tag, resourcetype, resourceid, ownertype, ownerid
+                                                   HAVING COUNT(*) > 1")) {
+                // we have duplicates so we need to delete all but the first one
+                foreach ($taginfo as $tag) {
+                    $ids = get_column_sql("SELECT t.id FROM {tag} t WHERE t.tag = ? AND t.resourcetype = ?
+                                           AND t.resourceid = ? AND t.ownertype = ? AND t.ownerid = ?",
+                                          array($tag->tag, $tag->resourcetype, $tag->resourceid, $tag->ownertype, $tag->ownerid));
+                    array_shift($ids);
+                    execute_sql("DELETE FROM {tag} WHERE id IN (" . implode(', ', $ids) . ")");
+                }
+            }
+            add_index($table, $index);
+        }
+    }
+
+    if ($oldversion < 2020091600) {
+        log_debug('Install new Maroon theme fonts');
+        require_once(get_config('libroot') . 'skin.php');
+        install_skins_default();
+    }
+
+    if ($oldversion < 2020092100) {
+        log_debug('Adjust archived_submissions table');
+        $table = new XMLDBTable('archived_submissions');
+        $field = new XMLDBField('group');
+        $field->setAttributes(XMLDB_TYPE_INTEGER, 10);
+        change_field_notnull($table, $field);
+    }
+
+    // Set collation for view table - description field and block_instance table - configdata field for Bug 1895259
+    if ($oldversion < 2020093000) {
+        if (is_mysql()) {
+            $columns = array(0 => array('table' => 'view',
+                                        'value' => 'description'),
+                             1 => array('table' => 'view',
+                                        'value' => 'instructions'),
+                             2 => array('table' => 'block_instance',
+                                        'value' => 'configdata'),
+                             3 => array('table' => 'import_entry_requests',
+                                        'value' => 'entrycontent')
+                            );
+            foreach ($columns as $column) {
+                $charset = get_field_sql("SELECT character_set_name FROM information_schema.columns
+                                          WHERE table_schema = '" . get_config('dbname') . "'
+                                          AND table_name = '" . get_config('dbprefix') . $column['table'] . "'
+                                          AND column_name = ?", array($column['value']));
+                if ($charset && !preg_match('/utf8mb4/', $charset)) {
+                    execute_sql('ALTER TABLE {' . $column['table'] . '} MODIFY ' . $column['value'] . ' text CHARSET utf8mb4');
+                }
+            }
         }
     }
 

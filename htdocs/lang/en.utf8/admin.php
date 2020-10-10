@@ -53,6 +53,7 @@ $string['upgradeinprogress'] = 'An upgrade began at %s and did not complete. <a 
 $string['Plugin'] = 'Plugin';
 $string['jsrequiredforupgrade'] = 'You must enable JavaScript to perform an install or upgrade.';
 $string['dbnotutf8warning'] = 'You are not using a UTF-8 database. Mahara stores all data as UTF-8 internally. You may still attempt this upgrade, but it is recommended that you convert your database to UTF-8.';
+$string['dbnotutf8mb4warning'] = 'You are not using a utf8mb4 Character Set (4-Byte UTF-8 Unicode Encoding) database. Mahara stores all data as utf8mb4 internally. You may still attempt this upgrade, but it is recommended that you convert your database to utf8mb4.';
 $string['dbcollationmismatch'] = 'A column of your database is using a collation that is not the same as the database default. Please ensure all columns use the same collation as the database.';
 $string['maharainstalled'] = 'Mahara is already installed.';
 $string['cliadminpassword1'] = 'The password for the administration account';
@@ -93,7 +94,7 @@ $string['institutionstaticpages']     = 'Institution static pages';
 $string['staticpageinstitutionbad'] = "You can't access and/or edit static pages for institution '%s'";
 $string['usedefault'] = 'Use site default';
 $string['usedefaultdescription3'] = 'Use the site\'s default text for the selected page type.';
-$string['staticpagesdesc'] = 'Edit the content of the hompage and "About"';
+$string['staticpagesdesc'] = 'Edit the content of the homepage and "About"';
 $string['staticpagesinstdesc'] = 'Edit the content of an institution\'s static pages';
 $string['institutionprivacypagedescription'] = 'Edit the privacy statement for your institution, which is displayed in addition to the site privacy statement. The version you edited last becomes the current privacy statement automatically. You see the current site privacy statement as reference.';
 $string['institutiontermspagedescription'] = 'Edit the terms and conditions for your institution, which are displayed in addition to the site terms and conditions. The version you edited last becomes the current terms and conditions automatically. You see the current site terms and conditions as reference.';
@@ -110,7 +111,7 @@ $string['sitefontsdesc'] = 'Upload and manage fonts that everyone can use in ski
 $string['sitelicenses'] = 'Licenses';
 $string['sitelicensesadd'] = 'Add license';
 $string['sitelicensesdesc']     = 'Configure the list of licenses that people can use on their content';
-$string['sitelicensesdisablednote1']     = '<b>Note</b>: License metadata is currently disabled. You will need to enable it in the "Site settings" section of "<a href="%sadmin/site/options.php">Configure site</a>" before people will be able to specify licenses.';
+$string['sitelicensesdisablednote1']     = '<strong>Note</strong>: License metadata is currently disabled. You will need to enable it in the "Site settings" section of "<a href="%sadmin/site/options.php">Configure site</a>" before people will be able to specify licenses.';
 $string['sitelicensesedit'] = 'Edit license';
 $string['sitefilesdescription'] = 'Upload and administer files that can be put in the "Links and resources" menu and in site pages';
 $string['siteskins'] = 'Site skins';
@@ -143,11 +144,13 @@ $string['uploadcsvdesc'] = 'Upload a CSV file containing details for new account
 $string['uploadgroupcsv'] = 'Add groups by CSV';
 $string['uploadgroupmemberscsv'] = 'Update group members by CSV';
 $string['usersearch'] = 'People search';
+$string['searchforaperson'] = 'Search for a person';
 $string['usersearchdescription1'] = 'Search all people and perform administrative actions on their accounts';
 $string['peoplesearchinstructions'] = 'You can search for people by entering their name or email address into the search box. Click "Advanced options" to see options to narrow your search.';
 $string['emailaddresshidden'] = 'Email address hidden';
 $string['inactive'] = 'Account not active';
 $string['inactivefor1'] = '"%s" is currently not an active account';
+$string['noadminspecified'] = 'There must be at least one current administrator';
 
 $string['administergroups'] = 'Administer groups';
 $string['administergroupsdesc'] = 'Manage groups, their administrators, and space available';
@@ -178,7 +181,7 @@ $string['filtersinstalled'] = 'Filters installed.';
 $string['nofiltersinstalled'] = 'No HTML filters installed.';
 
 $string['allowediframesites'] = 'Allowed iframe sources';
-$string['iframesitesdescriptionshort'] = 'Whitelist the embedding of external content available via iframes';
+$string['iframesitesdescriptionshort'] = 'Allow the embedding of external content available via iframes';
 $string['allowediframesitesdescription'] = 'People are allowed to embed content from the following external sites on their pages, inside HTML &lt;iframe&gt; elements. Typically, this is used to display content hosted elsewhere. The list of allowed sites can be modified on this page.';
 $string['allowediframesitesdescriptiondetail'] = 'The icon and display name will be visible when authors configure an external media block. All sites with the same display name are grouped together in the configuration form, but iframe source text matching any of the sites will be allowed.';
 $string['iframeurldescription'] = "Text to match at the beginning of the iframe source URL (without the http://). Only letters, digits and the characters '.', '/', '_', and '-' are allowed.";
@@ -218,14 +221,14 @@ $string['generatedviewurls'] = array(
 $string['cleanurlsdescriptionshort'] = 'Configure site to use human-readable URLs';
 
 $string['embeddedurls'] = 'Update embedded URLs';
-$string['embeddedurlsdescription'] = '<p>If you change your URL then existing links within embedded content on the site will point to the wrong place.</p><p>You can fix them up here by specifying the old URL domain.</p>';
+$string['embeddedurlsdescription'] = '<p>If you change your URL, the existing links within embedded content on the site will point to the wrong place.</p><p>You can fix them up here by specifying the old URL domain.</p>';
 $string['nopotentialembeddedurls'] = '<p>There are no potential old URLs detected.</p>';
 $string['potentialembeddedurls'] = '<p>The following sections look to have old URLs.</p>';
 $string['oldurl'] = 'Old site URL';
-$string['oldurldescription'] = 'Enter the URL path of the old site, eg "https://oldsite.com" to see if there are anything to update.';
+$string['oldurldescription'] = 'Enter the URL path of the old site, e.g. "https://oldsite.com" to see if there is anything to update.';
 $string['checkurl'] = 'Check URL';
 $string['domigrateurls'] = 'Update URLs';
-$string['migrateurlsdescription'] = 'Change all the embedded URLs that start with "%s" to now start with "%s"';
+$string['migrateurlsdescription'] = 'Change all embedded URLs that start with "%s" to now start with "%s"';
 $string['migrateurlsconfirm'] = 'Confirm migration';
 $string['migratedbasicurls'] = 'Updated %s content URLs';
 $string['migratedblockurls'] = 'Updated %s block content URLs';
@@ -435,7 +438,7 @@ $string['homepageredirectdescription'] = 'If you want the first page a person se
 $string['homepageredirecturl'] = 'Landing page';
 $string['homepageredirecturldescription'] = 'For this to work, the page needs to be accessible to all registered people.';
 $string['hstsoverride'] = 'HSTS override';
-$string['hstsoverridedesc'] = 'Override the setting of HTTP Strict Transport Security (HSTS) value if a down-stream service is setting it to avoid setting it twice.';
+$string['hstsoverridedesc'] = 'Override the setting of the HTTP Strict Transport Security (HSTS) value if a down-stream service is setting it to avoid setting it twice.';
 $string['islandingpage'] = 'This page is used as custom landing page for the site.';
 $string['landingpagegone'] = 'The page "%s" was the custom landing page for the site before you made the permission change. It has been removed as the custom landing page from the site settings.';
 $string['landingpagegonesubject'] = 'Custom landing page removed';
@@ -472,7 +475,7 @@ $string['recaptchaprivatekeydesc1'] = 'The secret key for your site\'s reCAPTCHA
 $string['recaptchapublickey1'] = 'reCAPTCHA site key';
 $string['recaptchapublickeydesc1'] = 'The site key for your site\'s reCAPTCHA account.';
 $string['remoteavatars'] = 'Display remote avatars';
-$string['remoteavatarsdescription1'] = 'Use the <a href="http://www.gravatar.com">Gravatar</a> service for default profile pictures.';
+$string['remoteavatarsdescription1'] = 'Use the <a href="https://www.gravatar.com">Gravatar</a> service for default profile pictures.';
 $string['searchplugin'] = 'Search plugin';
 $string['searchplugindescription'] = 'Search plugin to use';
 $string['searchconfigerror1'] = 'The configuration settings for the search plugin "%s" are incorrect. Please check the configuration settings under "Extensions" → "Plugin type: search". You may need to hit the search\'s \'Reset\' button when done.';
@@ -498,16 +501,16 @@ $string['siteoptionspagedescription'] = 'Here you can set some global options th
 $string['siteoptionsset'] = 'Site options have been updated.';
 $string['sitethemedescription'] = 'The default theme for the site. If your theme is not listed, check the error log.';
 $string['skins'] = 'Page skins';
-$string['skinsinstitutiondescription2'] = 'Members of this institution can use "skins" on their pages.';
+$string['skinsinstitutiondescription2'] = 'Members of this institution can use skins on their pages.';
 $string['smallviewheaders'] = 'Small page headers';
 $string['smallviewheadersdescription1'] = 'Display a small header and site navigation when viewing or editing portfolio pages.';
-$string['spamhaus1'] = 'Spamhaus URL blacklist';
+$string['spamhaus2'] = 'Spamhaus URL deny list';
 $string['spamhausdescription1'] = 'Check URLs against the Spamhaus DNSBL.';
 $string['staffaccessreports'] = 'Access reports for staff';
 $string['staffaccessreportsdescription1'] = 'Allow site and institution staff to access the "Account details", "Portfolio access", and "Masquerading sessions" reports in their institution(s). These reports are normally restricted to administrators.';
 $string['institutionstaffallreports'] = 'All reports for institution staff';
 $string['institutionstaffallreportsdescription'] = 'Allow institution staff to access all reports for their institution(s). The reports are normally restricted to administrators and site staff.';
-$string['surbl1'] = 'SURBL URL blacklist';
+$string['surbl2'] = 'SURBL URL deny list';
 $string['surbldescription1'] = 'Check URLs against the SURBL DNSBL.';
 $string['disableexternalresources'] = 'Disable external resources in HTML';
 $string['disableexternalresourcesdescription1'] = 'Disable the embedding of external resources, preventing authors from embedding things like images from other sites.';
@@ -668,7 +671,7 @@ $string['emailsmtphostsdescription'] = 'SMTP server to be used for mail sending,
 $string['emailsmtpport'] = 'SMTP port';
 $string['emailsmtpportdescription'] = 'Specify port number if SMTP server uses port different from 25';
 $string['emailsmtpuser'] = 'User';
-$string['emailsmtpuserdescription'] = 'If SMTP server requires authentication, enter account credentials in the corresponding fields.';
+$string['emailsmtpuserdescription'] = 'If the SMTP server requires authentication, enter account credentials in the corresponding fields.';
 $string['emailsmtppass'] = 'Password';
 $string['emailsmtpsecure'] = 'SMTP encryption';
 $string['emailsmtpsecuredescription'] = 'If the SMTP server supports encryption, enable it here.';
@@ -720,7 +723,7 @@ $string['uploadcsvpagedescription7'] = '<p>Here you can create new accounts by u
 
 <pre>username,password,email,firstname,lastname,studentid</pre>
 
-<p>This row must include the following fields when you create <i>new</i> accounts:</p>
+<p>This row must include the following fields when you create <em>new</em> accounts:</p>
 <ul class="fieldslist">
 <li>username</li>
 <li>firstname</li>
@@ -1036,7 +1039,7 @@ $string['licensedefaultmandatory'] = 'If authors are required to choose a licens
 $string['Logo'] = 'Logo';
 $string['Logomobile'] = 'Mobile logo';
 $string['logodescription1'] = 'You can upload an image here that will be displayed to your institution\'s members as logo for your theme. The logo will be resized to fit the space available.';
-$string['logoxsdescription'] = 'You can upload a second logo that is to be used on small devices when there is not much space. The logo should be square for best results.';
+$string['logoxsdescription'] = 'You can upload a second logo that is to be used on mobile devices when there is not much space. The logo should be square for best results.';
 $string['deletelogo'] = 'Delete logo';
 $string['deletelogoxsmobile'] = 'Delete mobile logo';
 $string['deletelogodescription2'] = 'Revert to the standard header logo for your institution\'s theme.';
@@ -1074,7 +1077,7 @@ $string['settingsfor'] = 'Settings for:';
 $string['institutionmembers'] = 'Institution members';
 $string['notadminforinstitution'] = 'You are not an administrator for that institution.';
 $string['institutionmemberspagedescription'] = 'On this page, you can see people who have requested membership of your institution and add them as members. You can also remove people from your institution and invite others to join.';
-$string['suspendordeletethisuser'] = 'Suspend or delete this person';
+$string['suspendordeletethisuser'] = 'Suspend or delete this account';
 
 $string['institutionusersinstructionsrequesters2'] = 'The list in the "%1$s" field shows everyone who has asked to join your institution. You can use the search box to find particular people. If you want to add people to your institution or decline their membership requests, first move them to the "%2$s" field by selecting them in the "%1$s" field and then clicking on the right arrow button. The "Add members" button will add everyone in the "%2$s" field to the institution. The "Decline requests" button will remove the membership requests shown in the "%2$s" field.';
 $string['institutionusersinstructionsnonmembers2'] = 'The list in the "%1$s" field shows everyone who is not yet a member of your institution. You can use the search box to find particular people. To invite people to join the institution, first move them to the "%2$s" field by selecting them in the "%1$s" field and then clicking on the right arrow button. The "Invite people" button will send invitations to everyone in the "%2$s" field. These people will not be associated with your institution until they accept the invitation. Site administrators see the "Add members" button and can add people straight away into an institution.';
@@ -1209,7 +1212,7 @@ $string['bulkexport'] = 'Export accounts';
 $string['bulkexportempty'] = 'Nothing suitable to export. Please double-check the list of usernames.';
 $string['bulkexportinstitution'] = 'The institution from which all members should be exported';
 $string['bulkexporttitle1'] = 'Bulk export accounts';
-$string['bulkexportdescription1'] = 'Choose an export format and then either choose the institution to export <b>or</b> specify a list of usernames.';
+$string['bulkexportdescription1'] = 'Choose an export format and then either choose the institution to export <strong>or</strong> specify a list of usernames.';
 $string['bulkexportusernames'] = 'Usernames to export';
 $string['bulkexportusernamesdescription'] = 'A list of the accounts (one username per line) to be exported along with their data.';
 $string['couldnotexportusers'] = 'The following account(s) could not be exported: %s';
@@ -1342,7 +1345,7 @@ $string['masquerader'] = 'Masquerading administrator';
 $string['masqueradee'] = 'Person';
 $string['nomasquerades'] = 'No administrator has masqueraded yet as somebody else since the logging of masquerading sessions has been turned on.';
 $string['loginaslog'] = 'Masquerading sessions';
-$string['masqueradingnotloggedwarning'] = '<b>Note</b>: Logging of masquerading sessions is currently disabled. In order to see data in this table, the site administrator needs to turn it on in "Logging settings" under "<a href="%sadmin/site/options.php">Configure site</a>".';
+$string['masqueradingnotloggedwarning'] = '<strong>Note</strong>: Logging of masquerading sessions is currently disabled. In order to see data in this table, the site administrator needs to turn it on in "Logging settings" under "<a href="%sadmin/site/options.php">Configure site</a>".';
 $string['masqueradenotificationsubject'] = 'An administrator logged in as you';
 $string['masqueradenotificationnoreason'] = 'The administrator %s logged into your account on %s.';
 $string['masqueradenotificationreason'] = 'The administrator %s logged into your account on %s. The reason was: %s';
@@ -1352,7 +1355,7 @@ $string['progressbar'] = 'Profile completion';
 $string['showprogressbar'] = 'Show profile completion';
 $string['progressbarsaved'] = 'Progress bar saved successfully.';
 $string['showprogressbardescription2'] = 'In a sidebar, display a progress bar with tips about what to complete in the profile. This can be disabled in the account preferences.';
-$string['progressbardisablednote2'] = '<b>Note</b>: Profile completion is currently disabled. You will need to enable it in the "Side block settings" section of "<a href="%sadmin/site/options.php">Configure site</a>" before people can track their progress towards completing their profile.';
+$string['progressbardisablednote2'] = '<strong>Note</strong>: Profile completion is currently disabled. You will need to enable it in the "Side block settings" section of "<a href="%sadmin/site/options.php">Configure site</a>" before people can track their progress towards completing their profile.';
 $string['profilecompletiondesc'] = 'If profile completion is enabled, select content that counts towards a completed profile';
 $string['profilecompletenessdesc1'] = 'The profile completion allows people to have a visual indicator in the sidebar showing them how complete their profile already is. You can choose the artefacts that will count towards the profile completion. All other artefacts can be used, but do not factor into the completion count.';
 $string['profilecompletenesspreview'] = 'You can preview what the profile completion looks like in the "Profile completion preview" side block.';

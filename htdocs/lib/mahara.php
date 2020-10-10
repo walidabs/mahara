@@ -174,7 +174,8 @@ function get_dwoo_dir() {
 function ensure_install_sanity() {
     // Must must must be a UTF8 database!
     if (!db_is_utf8()) {
-        throw new ConfigSanityException(get_string('dbnotutf8', 'error'));
+        $dbnotutf = (is_mysql() ? 'dbnotutf8mb4' : 'dbnotutf8');
+        throw new ConfigSanityException(get_string($dbnotutf, 'error'));
     }
     if (is_postgres() && !postgres_create_language('plpgsql')) {
         throw new ConfigSanityException(get_string('plpgsqlnotavailable', 'error'));
@@ -2340,28 +2341,51 @@ abstract class Plugin implements IPlugin {
      *
      * @param array $institutions the institutions for the context of selecting
      *        the client connections
+     * @param string $func  [optional] The function name that wants to be called
      *
      * @return array
      */
-    public static function calculate_webservice_connections($institutions) {
+    public static function calculate_webservice_connections($institutions, $func=null) {
 
-        $me = get_called_class();
-        $connection_defs = call_user_func($me . '::define_webservice_connections');
+        $pluginclasses = array();
+        $calledclass = get_called_class();
+        if ($calledclass == 'Plugin') {
+            // we need to discover what Plugins are available
+            foreach (plugin_all_installed() as $type) {
+                $classname = generate_class_name($type->plugintype, $type->name);
+                // if we have a $func defined we can check which plugins have the function
+                // and only include those compatible plugins
+                if ($func) {
+                    if (method_exists($classname, $func)) {
+                        $pluginclasses[] = $classname;
+                    }
+                }
+                else {
+                    $pluginclasses[] = $classname;
+                }
+            }
+        }
+        else {
+            $pluginclasses[] = $calledclass;
+        }
+
         $connections = array();
-        foreach ($connection_defs as $def) {
-            if (isset($def['connection'])) {
-                $cname = $def['connection'];
-                if ($results = get_records_sql_assoc(
-                    'SELECT cci.*
-                     FROM {client_connections_institution} AS cci
-                     WHERE cci.class = ? AND
-                           cci.connection = ? AND
-                           cci.institution IN ('.join(',', array_map('db_quote', $institutions)).') AND enable = 1', array($me, $cname))
-                ) {
-                    foreach ($results as $c) {
-                        $c->version = $def['version'];
-                        $c->connectorname = $def['name'];
-                        $connections[]= $c;
+        foreach ($pluginclasses as $pluginclass) {
+            $connection_defs = call_user_func($pluginclass . '::define_webservice_connections');
+            foreach ($connection_defs as $def) {
+                if (isset($def['connection'])) {
+                    $cname = $def['connection'];
+                    if ($results = get_records_sql_assoc("SELECT cci.*
+                                                          FROM {client_connections_institution} AS cci
+                                                          WHERE cci.class = ?
+                                                          AND cci.connection = ?
+                                                          AND cci.institution IN (" . join(',', array_map('db_quote', $institutions)) . ")
+                                                          AND enable = 1", array($pluginclass, $cname))) {
+                        foreach ($results as $c) {
+                            $c->version = $def['version'];
+                            $c->connectorname = $def['name'];
+                            $connections[] = $c;
+                        }
                     }
                 }
             }
@@ -2373,10 +2397,11 @@ abstract class Plugin implements IPlugin {
      * This function returns an array of client connections.
      *
      * @param object $user the user for the context of selecting the client connections
+     * @param string $func  [optional] The function name that wants to be called
      *
      * @return array
      */
-    public static function get_webservice_connections($user=null) {
+    public static function get_webservice_connections($user=null, $func=null) {
         global $USER;
 
         // is the web service connection switch enabled?
@@ -2402,7 +2427,7 @@ abstract class Plugin implements IPlugin {
         else {
             $userinstitutions[] = 'mahara';
         }
-        $cdefs = self::calculate_webservice_connections($userinstitutions);
+        $cdefs = self::calculate_webservice_connections($userinstitutions, $func);
 
         $connections = array();
         foreach ($cdefs as $c) {
@@ -2412,16 +2437,14 @@ abstract class Plugin implements IPlugin {
             if (!empty($c->token)) {
                 $authtype = 'token';
                 if ($c->useheader) {
-                    $auth['header'] = (empty($c->header) ? 'Authorization' : $c->header . ": " . $c->token);
+                    $auth['header'] = (!empty($c->header) ? $c->header : '');
+                }
+                if (strpos($c->token, '=')) {
+                    list($k, $v) = explode('=', $c->token);
+                    $auth[$k] = $v;
                 }
                 else {
-                    if (strpos($c->token, '=')) {
-                        list($k, $v) = explode('=', $c->token);
-                        $auth[$k] = $v;
-                    }
-                    else {
-                        $auth['wstoken'] = $c->token;
-                    }
+                    $auth['wstoken'] = $c->token;
                 }
             }
             else if (!empty($c->username) && !empty($c->password) ) {
@@ -2567,6 +2590,21 @@ abstract class Plugin implements IPlugin {
         throw new SystemException("save_config_options not defined");
     }
 
+    /**
+     * Whether this plugin should show a config info modal on the Administration->Extensions screen.
+     *
+     * If you return true here, you will also need to define the following method:
+     * - get_config_info()
+     *
+     * @return boolean
+     */
+    public static function has_config_info() {
+        return false;
+    }
+
+    public static function get_config_info() {
+        throw new SystemException("get_config_info not defined");
+    }
 
     /**
      * This function returns a list of activities this plugin brings. (i.e. things that can
@@ -3055,8 +3093,16 @@ function can_view_view($view, $user_id=null) {
     }
 
     // Grant temporary access if LTI signed request was made
-    if ($view->get('id') == $SESSION->get('lti.canviewview')) {
-        return true;
+    if ($ltiview = $SESSION->get('lti.canviewview')) {
+        if ($view->get('id') == $ltiview) {
+            // this page is allowed directly
+            return true;
+        }
+        else if (record_exists_select('collection_view', 'collection = (SELECT collection FROM {collection_view} WHERE view = ?) AND view = ?',
+            array($ltiview, $view->get('id')))) {
+            // this page is part of a collection that is allowed
+            return true;
+        }
     }
 
     // Overriding start/stop dates are set by the owner to deny access

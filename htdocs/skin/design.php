@@ -287,7 +287,7 @@ $elements['viewcontent'] = array(
         'elements'     => array(
             'header_title' => array(
                 'type' => 'html',
-                'value' => '<h4>' . get_string('header', 'skin') .'</h4>',
+                'value' => '<h2>' . get_string('header', 'skin') .'</h2>',
                 'class' => 'title',
             ),
             'view_heading_font_family' => array(
@@ -310,7 +310,7 @@ $elements['viewcontent'] = array(
             ),
             'block_header_title' => array(
                 'type' => 'html',
-                'value' => '<h4>' . get_string('blockheading', 'skin') .'</h4>',
+                'value' => '<h2>' . get_string('blockheading', 'skin') .'</h2>',
                 'class' => 'title',
             ),
             'view_block_header_font' => array(
@@ -318,7 +318,7 @@ $elements['viewcontent'] = array(
                 'title' => get_string('blockheaderfontfamily', 'skin'),
                 'defaultvalue' => (!empty($viewskin['view_block_header_font']) ? $viewskin['view_block_header_font'] : ''),
                 'width' => 144,
-                'options' => $fontoptions
+                'options' => $headerfontoptions
             ),
             'view_block_header_font_color' => array(
                 'type' => 'color',
@@ -333,7 +333,7 @@ $elements['viewcontent'] = array(
             ),
             'content_title' => array(
                 'type' => 'html',
-                'value' => '<h4>' . get_string('content', 'mahara') .'</h4>',
+                'value' => '<h2>' . get_string('content', 'mahara') .'</h2>',
                 'class' => 'title',
             ),
             'view_text_font_family' => array(
@@ -346,11 +346,9 @@ $elements['viewcontent'] = array(
             'view_text_font_size' => array(
                     'type' => 'select',
                     'title' => get_string('fontsize', 'skin'),
-                    'defaultvalue' => (!empty($viewskin['view_text_font_size']) ? $viewskin['view_text_font_size'] : 'small'),
+                    'defaultvalue' => (!empty($viewskin['view_text_font_size']) ? $viewskin['view_text_font_size'] : 'medium'),
                     'width' => 144,
                     'options' => array(
-                            'xx-small' => array('value' => get_string('fontsizesmallest', 'skin'), 'style' => 'font-size: xx-small;'),
-                            'x-small' => array('value' => get_string('fontsizesmaller', 'skin'), 'style' => 'font-size: x-small;'),
                             'small' => array('value' => get_string('fontsizesmall', 'skin'), 'style' => 'font-size: small;'),
                             'medium' => array('value' => get_string('fontsizemedium', 'skin'), 'style' => 'font-size: medium;'),
                             'large' => array('value' => get_string('fontsizelarge', 'skin'), 'style' => 'font-size: large;'),

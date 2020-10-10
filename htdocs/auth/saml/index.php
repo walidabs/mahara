@@ -45,7 +45,7 @@ $sp = 'default-sp';
 PluginAuthSaml::init_simplesamlphp();
 
 // Check the SimpleSAMLphp config is compatible
-$saml_config = SimpleSAML_Configuration::getInstance();
+$saml_config = SimpleSAML\Configuration::getInstance();
 $session_handler = $saml_config->getString('session.handler', false);
 $store_type = $saml_config->getString('store.type', false);
 if ($store_type == 'phpsession' || $session_handler == 'phpsession' || (empty($store_type) && empty($session_handler))) {
@@ -60,7 +60,7 @@ if (param_variable("logout", false)) {
 }
 
 // what is the session like?
-$saml_session = SimpleSAML_Session::getSession();
+$saml_session = SimpleSAML\Session::getSession();
 $valid_saml_session = $saml_session ? $saml_session->isValid($sp) : false;
 
 // figure out what the returnto URL should be
@@ -118,7 +118,7 @@ if (($USER->is_logged_in() && $migratecheck) || !$as->isAuthenticated()) {
 }
 
 // reinitialise config to pickup idp entityID
-SimpleSAML_Configuration::init(get_config('docroot') . 'auth/saml/config');
+SimpleSAML\Configuration::init(get_config('docroot') . 'auth/saml/config');
 $as = new SimpleSAML\Auth\Simple('default-sp');
 if ($migratecheck) {
     $as->login(array('ReturnTo' => get_config('wwwroot') . "auth/saml/index.php", 'KeepPost' => FALSE));
@@ -202,10 +202,18 @@ if ($can_login) {
     if (preg_match('/\/auth\/saml\//', $wantsurl)) {
         $wantsurl = $CFG->wwwroot;
     }
-    // must be within this domain
-    if (!preg_match('/'.$_SERVER['HTTP_HOST'] . '/', $wantsurl)) {
+
+    // Schema present then it must be within this domain
+    if (preg_match('/\:\/\//', $wantsurl) && !preg_match('/' . $_SERVER['HTTP_HOST'] . '/', $wantsurl)) {
         $wantsurl = $CFG->wwwroot;
     }
+
+    // If relative path then add wwwroot
+    if (!preg_match('/\:\/\//', $wantsurl) && preg_match('/\//', $wantsurl)) {
+        $wantsurl = preg_replace('/^\//', '', $wantsurl); // remove leading /
+        $wantsurl = $CFG->wwwroot . $wantsurl;
+    }
+
     // if redirecting to using homepage but using custom landing page
     $homepageredirecturl = get_config('homepageredirecturl');
     if ($wantsurl === $CFG->wwwroot && get_config('homepageredirect') && !empty($homepageredirecturl)) {
@@ -488,7 +496,7 @@ function auth_saml_loginlink_screen($remoteuser, $currentuser) {
         'pluginname'     => 'saml',
         'elements'       => array(
                     'linklogins' => array(
-                        'value' => '<div><b>' . get_string('linkaccounts', 'auth.saml', $remoteuser, $currentuser) . '</b></div><br/>'
+                        'value' => '<div><strong>' . get_string('linkaccounts', 'auth.saml', $remoteuser, $currentuser) . '</strong></div><br/>'
                     ),
                     'submit' => array(
                         'type'  => 'submitcancel',

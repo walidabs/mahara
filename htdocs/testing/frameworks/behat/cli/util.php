@@ -84,6 +84,11 @@ $options['config']->description = 'Get behat YML config path';
 $options['config']->required = false;
 $options['config']->defaultvalue = false;
 
+$options['behat-root'] = new stdClass();
+$options['behat-root']->description = 'Get behat data root directory';
+$options['behat-root']->required = false;
+$options['behat-root']->defaultvalue = false;
+
 $options['format'] = new stdClass();
 $options['format']->shortoptions = array('f');
 $options['format']->description = 'Get behat format options';
@@ -148,7 +153,13 @@ try {
         }
         else {
             // Update behat and dependencies using composer
-            testing_update_dependencies();
+            if (needs_dependencies_update()) {
+                cli::cli_print("Composer lock file out of date");
+                testing_update_dependencies();
+            }
+            else {
+                cli::cli_print("Composer lock file up to date");
+            }
         }
 
         if ($cli->get_cli_param('inithtml')) {
@@ -239,9 +250,14 @@ try {
             echo BehatTestingUtil::get_behat_config_path();
         }
     }
+    else if ($cli->get_cli_param('behat-root')) {
+        echo $CFG->behat_dataroot;
+    }
 }
 catch (Exception $e) {
     cli::cli_exit($e->getMessage(), true);
 }
 
 exit(0);
+
+

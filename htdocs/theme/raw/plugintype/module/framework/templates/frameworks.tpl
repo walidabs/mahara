@@ -1,6 +1,6 @@
 {include file="header.tpl"}
 
-<h4>{str tag="frameworks" section="module.framework"}</h4>
+<h2>{str tag="frameworks" section="module.framework"}</h2>
 <p class="lead">{str tag="frameworksdesc" section="module.framework"}</p>
 
 <table class="listing table table-striped text-small">

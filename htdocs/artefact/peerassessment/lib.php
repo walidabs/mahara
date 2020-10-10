@@ -382,7 +382,7 @@ class ArtefactTypePeerassessment extends ArtefactType {
         }
         $userid = $USER->get('id');
         $viewid = $view->get('id');
-        $canedit = ($USER->can_peer_assess($view) && !self::is_signed_off($view));
+        $canedit = ($USER->can_peer_assess($view) && !self::is_signed_off($view) && $view->get('submittedstatus') == View::UNSUBMITTED);
         $owner = $view->get('owner');
         $isowner = $userid && $userid == $owner;
 
@@ -534,7 +534,7 @@ class ArtefactTypePeerassessment extends ArtefactType {
         global $USER;
 
         $signable = false;
-        if ($view->get('owner')) {
+        if ($view->get('owner') && $view->get('submittedstatus') == View::UNSUBMITTED ) {
             $signable = ($view->get('owner') == $USER->get('id')) ? true : false;
         }
         return $signable;
@@ -804,7 +804,7 @@ class ArtefactTypePeerassessment extends ArtefactType {
                     'type'  => 'button',
                     'usebuttontag' => true,
                     'class' => 'btn-secondary btn-sm',
-                    'value' => '<span class="icon icon-trash-alt icon-lg text-danger" role="presentation" aria-hidden="true"></span> <span class="sr-only">' . get_string('delete') . '</span>',
+                    'value' => '<span class="icon icon-trash-alt text-danger" role="presentation" aria-hidden="true"></span> <span class="sr-only">' . get_string('delete') . '</span>',
                     'confirm' => get_string('reallydeletethisassessment', 'artefact.peerassessment'),
                     'name'  => 'delete_assessment_submit',
                 ),

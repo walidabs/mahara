@@ -62,7 +62,7 @@ class PluginExportHtml extends PluginExport {
      * These javascript files will be included in index.html via the
      * export/html/templates/header.tpl
      */
-    private $scripts = array('jquery', 'bootstrap.min', 'dock', 'modal', 'lodash', 'gridstack', 'gridlayout', 'masonry.min', 'select2.full', 'theme');
+    private $scripts = array('jquery', 'popper.min', 'bootstrap.min', 'dock', 'modal', 'lodash', 'gridstack', 'gridlayout', 'masonry.min', 'select2.full', 'theme');
 
     /**
     * constructor.  overrides the parent class
@@ -320,7 +320,21 @@ class PluginExportHtml extends PluginExport {
         $smarty->assign('export_time', $this->exporttime);
         $smarty->assign('sitename', get_config('sitename'));
         $smarty->assign('stylesheets', $stylesheets);
-        $smarty->assign('scripts', $this->scripts);
+        $smarty->assign('WWWROOT', get_config('wwwroot'));
+        $htmldir = ($this->exportingoneview ? '' : 'HTML/');
+        $scripts = [];
+        foreach($this->scripts as $i => $script) {
+            // theme should be in theme folder use,
+            // the rest of the scripts don't depend on the theme
+            if ($script == 'theme') {
+                $scripts[$i] = $rootpath . $htmldir . $this->theme_path('js/') .  $script . '.js';
+            }
+            else {
+                $scripts[$i] = $rootpath . $htmldir . 'static/theme/raw/static/js/' . $script . '.js';
+            }
+        }
+        $smarty->assign('scripts', $scripts);
+
         if ($this->exportingoneview) {
             $smarty->assign('scriptspath', $rootpath . $this->theme_path('js/'));
         }
@@ -913,7 +927,7 @@ private function get_folder_modals(&$idarray, BlockInstance $bi) {
     protected function copy_static_files() {
         global $THEME, $SESSION;
         require_once('file.php');
-        $staticdir = $this->get('exportdir') . '/' . $this->get('rootdir') . '/static/';
+        $staticdir = $this->get('exportdir') . $this->get('rootdir') . '/static/';
         $directoriestocopy = array();
         $themestaticdirs = $THEME->get_path('', true);
 
@@ -923,7 +937,7 @@ private function get_folder_modals(&$idarray, BlockInstance $bi) {
             foreach ($statics as $static) {
                 $themedir = $staticdir . 'theme/' . $theme . '/static/' . $static;
                 if (is_readable($dir . $static)) {
-                    $directoriestocopy[$dir . '/' . $static] = $themedir;
+                    $directoriestocopy[$dir . $static] = $themedir;
                     if (!check_dir_exists($themedir)) {
                         throw new SystemException("Could not create theme directory for theme $theme");
                     }
@@ -935,7 +949,7 @@ private function get_folder_modals(&$idarray, BlockInstance $bi) {
             foreach ($statics as $static) {
                 $themedir = $staticdir . 'theme/' . $theme . '/static/export/' . $static;
                 if (is_readable($dir . $static)) {
-                    $directoriestocopy[$dir . '/' . $static] = $themedir;
+                    $directoriestocopy[$dir . $static] = $themedir;
                     if (!check_dir_exists($themedir)) {
                         throw new SystemException("Could not create theme directory for theme $theme");
                     }
@@ -945,6 +959,7 @@ private function get_folder_modals(&$idarray, BlockInstance $bi) {
 
         // Copy over bootstrap and jquery files
         $jsdir =  $staticdir . 'theme/' . $theme . '/static/js/';
+        $directoriestocopy[get_config('docroot') . 'js/popper/popper.min.js'] = $jsdir . 'popper.min.js';
         $directoriestocopy[get_config('docroot') . 'lib/bootstrap/assets/javascripts/bootstrap.min.js'] = $jsdir . 'bootstrap.min.js';
         $directoriestocopy[get_config('docroot') . 'js/jquery/jquery.js'] = $jsdir . 'jquery.js';
         $directoriestocopy[get_config('docroot') . 'js/lodash/lodash.js'] = $jsdir . 'lodash.js';
@@ -1367,7 +1382,15 @@ class HtmlExportOutputFilter {
             list($key, $value) = explode('=', $matches[$i]);
             $options[$key] = $value;
         }
-        $filterpath = $this->exporter->get('exportingoneview') ? $this->exporter->get_root_path(1, 'files') : $this->exporter->get_root_path(3, $this->exporter->get('filedir'));
+        if (isset($matches[3]) && (substr($matches[3], 0, 4) === 'view')) {
+            // file is in a view
+            $distance = 3;
+        }
+        else {
+            // we are not in a view, could be blog post attachement or Notes attachement
+            $distance = 4;
+        }
+        $filterpath = $this->exporter->get('exportingoneview') ? $this->exporter->get_root_path(1, 'files') : $this->exporter->get_root_path($distance, $this->exporter->get('filedir'));
         return $this->get_export_path_for_file($artefact, $options, $filterpath);
     }
 

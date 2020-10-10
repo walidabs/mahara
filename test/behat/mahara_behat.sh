@@ -5,9 +5,9 @@ ACTION=$1
 REPORT=$3
 SCRIPTPATH=`readlink -f "${BASH_SOURCE[0]}"`
 MAHARAROOT=`dirname $( dirname $( dirname "$SCRIPTPATH" ))`
-BEHATROOT=`grep -v '^//\|^#' $MAHARAROOT/htdocs/config.php | grep behat_dataroot | grep -o "['\"].*['\"];" | sed "s/['\";]//g"`
+BEHATROOT=`php htdocs/testing/frameworks/behat/cli/util.php --behat-root`
 SERVER=0
-SERVERXVFB=0
+SERVERXVFB=
 test -z $SELENIUM_PORT && export SELENIUM_PORT=4444
 test -z $PHP_PORT && export PHP_PORT=8000
 test -z $XVFB_PORT && export XVFB_PORT=10
@@ -183,17 +183,20 @@ then
 
     #added html format for html report
     OPTIONS=''
-    if [[ $REPORT == 'html' ]]
-      then
-      if [ "$ACTION" = "rundebug" -o "$ACTION" = "rundebugheadless" ]
-      then
-          OPTIONS=$OPTIONS" --format=pretty --format=html"
-      else
-          OPTIONS=$OPTIONS" --format=progress --format=html"
-      fi
-    elif [ "$ACTION" = "rundebug" -o "$ACTION" = "rundebugheadless" ]
+    if [ "$ACTION" = "rundebug" -o "$ACTION" = "rundebugheadless" ]
     then
-          OPTIONS=$OPTIONS" --format=pretty"
+        OPTIONS=$OPTIONS" --format=pretty --out=std"
+    else
+        OPTIONS=$OPTIONS" --format=progress --out=std"
+    fi
+
+    if [[ $REPORT == 'html' ]]
+    then
+        OPTIONS=$OPTIONS" --format=html"
+    elif [[ $REPORT == 'junit' ]]
+    then
+        mkdir -p "${BEHATROOT}/behat/junit-reports"
+        OPTIONS=$OPTIONS" --format=junit --out=${BEHATROOT}/behat/junit-reports"
     fi
 
     # if it exists we're in jenkins, force junit
@@ -203,7 +206,7 @@ then
       rm -rf test/behat/results
       mkdir -p test/behat/results
 
-      OPTIONS=$OPTIONS" --format=junit --out=test/behat/results --format=progress --out=std"
+      OPTIONS=$OPTIONS" --format=junit --out=test/behat/results"
     fi
 
     echo OPTIONS: $OPTIONS

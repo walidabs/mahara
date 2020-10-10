@@ -209,6 +209,28 @@ $cfg->sendemail = true;
 // $cfg->smtpsecure = '';
 
 /**
+ * @global bool $cfg->smtpverifypeer indicates if peer verification is required
+ * when sending email to an external mail host. Normally this setting should be
+ * true, but it may be necessary to set to false if the external mail server
+ * has a certificate with a common name that does not match the server name.
+ *
+ * This setting should only be changed if you both require it and understand
+ * the potential security implications.
+ */
+$cfg->smtpverifypeer = true;
+
+/**
+ * @global bool $cfg->smtpallowselfsigned indicates if accepting a self signed
+ * certificate is allowed when sending mail to an external mail host. Normally
+ * this setting should be false, but the external mail host must be used and it
+ * has a self signed cert this will allow that.
+ *
+ * This setting should only be changed if you both require it and understand
+ * the potential security implications.
+ */
+$cfg->smtpallowselfsigned = false;
+
+/**
  * Variable Envelope Return Path Handling
  * @global bool $cfg->bounces_handle If you want mahara to keep track of email addresses which generate a
  * bounce, set bounces_handle to true.
@@ -348,9 +370,9 @@ $cfg->leapovermnetloglevel = 0;
 
 /**
  * @global string $cfg->remoteavatarbaseurl base URL of avatar server (with the trailing slash)
- * This should normally be set to http://www.gravatar.com/avatar/
+ * This should normally be set to https://www.gravatar.com/avatar/
  */
-//$cfg->remoteavatarbaseurl = 'http://www.gravatar.com/avatar/';
+//$cfg->remoteavatarbaseurl = 'https://www.gravatar.com/avatar/';
 
 /**
  * Options for width/height of wysiwyg editor in block configuration
@@ -861,3 +883,9 @@ $cfg->saml_log_attributes = false;
  * This is useful if the server or a downstream program sets this header already
  */
 //$cfg->hstsoverride = true;
+
+/**
+ * Allow emails sent to people that are using external authentication to contain authid parameter
+ * so that on following the link the person gets redirected to login at their external site first if needed
+ */
+//$cfg->emailexternalredirect = true;

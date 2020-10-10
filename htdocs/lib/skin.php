@@ -231,22 +231,39 @@ class Skin {
         $fordb = new stdClass();
         foreach (get_object_vars($this) as $k => $v) {
             $fordb->{$k} = $v;
-            if ($k == 'viewskin' && !empty($v)) {
-                $fordb->{$k} = serialize($v);
-            }
         }
         $fordb->mtime = db_format_timestamp(time());
-        if (isset($this->viewskin['body_background_image'])) {
-            $fordb->bodybgimg = $this->viewskin['body_background_image'];
+
+        try {
+            if (isset($this->viewskin['body_background_image']) && record_exists('artefact', 'id', $this->viewskin['body_background_image'])
+                && artefact_instance_from_id($this->viewskin['body_background_image'])) {
+                $fordb->bodybgimg = $this->viewskin['body_background_image'];
+            }
+            else {
+                $fordb->bodybgimg = null;
+                unset($fordb->viewskin['body_background_image']);
+            }
         }
-        else {
+        catch (ArtefactNotFoundException $e) {
             $fordb->bodybgimg = null;
+            unset($fordb->viewskin['body_background_image']);
         }
-        if (isset($this->viewskin['header_background_image'])) {
-            $fordb->headingbgimg = $this->viewskin['header_background_image'];
+        try {
+            if (isset($this->viewskin['header_background_image']) && record_exists('artefact', 'id', $this->viewskin['header_background_image'])
+            && artefact_instance_from_id($this->viewskin['header_background_image'])) {
+                $fordb->headingbgimg = $this->viewskin['header_background_image'];
+            }
+            else {
+                $fordb->headingbgimg = null;
+                unset($fordb->viewskin['header_background_image']);
+            }
         }
-        else {
+        catch (ArtefactNotFoundException $e) {
             $fordb->headingbgimg = null;
+            unset($fordb->viewskin['header_background_image']);
+        }
+        if (isset($fordb->viewskin) && !empty($fordb->viewskin )) {
+            $fordb->viewskin = serialize($fordb->viewskin);
         }
 
         db_begin();
@@ -584,7 +601,7 @@ class Skin {
         if ($font === '') {
             global $THEME;
             $fonts = Skin::get_all_theme_fonts($type);
-            $fontname = isset($fonts[$THEME->basename]) ? $fonts[$THEME->basename] : '';
+            $font = isset($fonts[$THEME->basename]) ? $fonts[$THEME->basename] : '';
         }
         $fontdata = get_record('skin_fonts', 'name', $font);
         if (!$fontdata) {
@@ -761,7 +778,7 @@ class Skin {
 
     /**
      * Gets font sizes for heading, sub-heading and normal text from given relative size (as in CSS).
-     * Relative size can be one of following: xx-small, x-small, small, medium, large, x-large or xx-large
+     * Relative size can be one of following: small, medium, large, x-large or xx-large
      * The font size of a page header is not affected by user chosen font size
      *
      * @param string $font_size
@@ -769,12 +786,6 @@ class Skin {
      */
     private static function get_font_sizes($font_size) {
         switch ($font_size) {
-            case 'xx-small':
-                return array(9, 5, 3);
-                break;
-            case 'x-small':
-                return array(9, 6, 4);
-                break;
             case 'small':
                 return array(9, 7, 5);
                 break;
@@ -791,7 +802,7 @@ class Skin {
                 return array(9, 14, 12);
                 break;
             default:
-                return array(9, 7, 5);
+                return array(9, 8, 6);
                 break;
         }
     }
@@ -1054,13 +1065,13 @@ class Skin {
         // Add the sample heading title - the font size does not affect the text within page header
         imagettftext($img2, $heading_size, 0, 10, $header_font_size+10, $heading_text_color, $heading_font, $heading_text);
 
-        list($r, $g, $b) = self::get_rgb_from_hex($skin['view_text_font_color']);
+        list($r, $g, $b) = self::get_rgb_from_hex($skin['view_block_header_font_color']);
         $emphasized_color = imagecolorallocate($img, $r, $g, $b);
         list($r, $g, $b) = self::get_rgb_from_hex('#CCCCCC');
         $line_color = imagecolorallocate($img, $r, $g, $b);
         $emphasized_text1 = get_string('previewsubhead1', 'skin'); // Latin for text
         $emphasized_text2 = get_string('previewsubhead2', 'skin');    // Latin for image
-        $emphasized_font = self::get_path_to_previewfile($skin['view_heading_font_family'], 'heading');
+        $emphasized_font = self::get_path_to_previewfile($skin['view_block_header_font'], 'heading');
 
         // Calculate y positions for drawing
         $subheading_y_pos = $header_font_size*4 + $emphasized_size + $emphasized_size;
@@ -1361,6 +1372,9 @@ function install_skins_default() {
         'bolditalic'  => array('variant' => 'bolditalic', 'font-weight' => 'bold', 'font-style' => 'italic'),
         'light'       => array('variant' => 'light', 'font-weight' => 'lighter', 'font-style' => 'normal'),
         'lightitalic' => array('variant' => 'light', 'font-weight' => 'lighter', 'font-style' => 'italic'),
+        '300'         => array('variant' => 'light', 'font-weight' => 'lighter', 'font-style' => 'normal'),
+        '700'         => array('variant' => 'bold', 'font-weight' => 'bold', 'font-style' => 'normal'),
+        '900'         => array('variant' => 'bold', 'font-weight' => 'bolder', 'font-style' => 'normal'),
     );
     // The basic regular/bold/italic/bolditalic combo
     $basicvariants = serialize(array($fv['regular'], $fv['bold'], $fv['italic'], $fv['bolditalic']));
@@ -1684,7 +1698,7 @@ function install_skins_default() {
         (object) array(
             'name' => 'Raleway',
             'title' => 'Raleway',
-            'licence' => '',
+            'licence' => 'OFL.txt',
             'previewfont' => 'raleway-regular.ttf',
             'variants' => serialize($ralewayvariants),
             'fonttype' => 't_modern',
@@ -1710,11 +1724,61 @@ function install_skins_default() {
             'name' => 'ShadowsIntoLightTwo',
             'title' => 'Shadows Into Light Two',
             'licence' => 'OFL.txt',
-            'previewfont' => 'shadowsintolight2-regular.ttf',
+            'previewfont' => 'shadows-into-light-two-v6-latin-ext_latin-regular.ttf',
             'variants' => serialize($shadowsintolight2variants),
             'fonttype' => 't_primaryschool',
             'onlyheading' => 0,
             'fontstack' => '\'Shadows Into Light Two\'',
+            'genericfont' => 'sans-serif'
+        )
+    );
+
+    $alegreyavariants = array();
+    foreach (array('700', '900') as $option) {
+        $alegreyavariants[$option] = $fv[$option];
+        foreach ($filetypes as $type) {
+            $alegreyavariants[$option][$type] = 'alegreya-v13-latin-ext_latin-' . $option . '.' . strtolower($type);
+        }
+    }
+    ensure_record_exists('skin_fonts',
+        (object) array(
+            'name' => 'Alegreya',
+            'title' => 'Alegreya'
+        ),
+        (object) array(
+            'name' => 'Alegreya',
+            'title' => 'Alegreya',
+            'licence' => 'OFL.txt',
+            'previewfont' => 'alegreya-v13-latin-ext_latin-700.ttf',
+            'variants' => serialize($alegreyavariants),
+            'fonttype' => 't_maroon',
+            'onlyheading' => 1,
+            'fontstack' => '\'Alegreya\'',
+            'genericfont' => 'serif'
+        )
+    );
+
+    $alegreyasansvariants = array();
+    foreach (array('300', '700', '900', 'italic', 'regular') as $option) {
+        $alegreyasansvariants[$option] = $fv[$option];
+        foreach ($filetypes as $type) {
+            $alegreyasansvariants[$option][$type] = 'alegreya-sans-v10-latin-ext_latin-' . $option . '.' . strtolower($type);
+        }
+    }
+    ensure_record_exists('skin_fonts',
+        (object) array(
+            'name' => 'AlegreyaSans',
+            'title' => 'Alegreya Sans'
+        ),
+        (object) array(
+            'name' => 'AlegreyaSans',
+            'title' => 'Alegreya Sans',
+            'licence' => 'OFL.txt',
+            'previewfont' => 'alegreya-sans-v10-latin-ext_latin-regular.ttf',
+            'variants' => serialize($alegreyasansvariants),
+            'fonttype' => 't_maroon',
+            'onlyheading' => 0,
+            'fontstack' => '\'Alegreya Sans\'',
             'genericfont' => 'sans-serif'
         )
     );

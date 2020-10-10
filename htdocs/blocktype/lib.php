@@ -1004,7 +1004,7 @@ class BlockInstance {
         }
         $this->tags = check_case_sensitive($tags, 'tag');
         delete_records('tag', 'resourcetype', 'blocktype', 'resourceid', $this->get('id'));
-        foreach ($this->tags as $tag) {
+        foreach (array_unique($this->tags) as $tag) {
             // truncate the tag before insert it into the database
             $tag = substr($tag, 0, 128);
             $tag = check_if_institution_tag($tag);
@@ -1283,6 +1283,9 @@ class BlockInstance {
         $smarty->assign('strremovetitletext', $title == '' ? get_string('removethisblock1', 'view', $id) : get_string('removeblock1', 'view', "'$title'", $id));
         $smarty->assign('strremovetitletexttooltip', get_string('removeblock2', 'view'));
         $smarty->assign('lockblocks', ($this->get_view()->get('lockblocks') && ($this->get_view()->get('owner') || $this->get_view()->get('group')))); // Only lock blocks for user's portfolio and group pages
+        $smarty->assign('cssicontype', call_static_method($blocktypeclass, 'get_css_icon_type',  $this->get('blocktype')));
+        $smarty->assign('cssicon', call_static_method($blocktypeclass, 'get_css_icon',  $this->get('blocktype')));
+        $smarty->assign('blocktypename', call_static_method($blocktypeclass, 'get_title'));
 
         $configdata = $this->get('configdata');
         $smarty->assign('draft', (isset($configdata['draft']) ? $configdata['draft'] : 0));
@@ -1290,10 +1293,8 @@ class BlockInstance {
         if ( $title) {
             if (isset($configdata['retractable']) && $configdata['retractable']) {
                 $smarty->assign('retractable', true);
-                if (defined('JSON') || $jsreply) {
-                    $jssmarty = smarty_core();
-                    $jssmarty->assign('id', $this->get('id'));
-                    $js .= $jssmarty->fetch('view/retractablejs.tpl');
+                if (isset($configdata['retractedonload']) && $configdata['retractedonload']) {
+                    $smarty->assign('retractedonload', true);
                 }
             }
         }
@@ -1603,7 +1604,7 @@ class BlockInstance {
         // Add submit/cancel buttons
         $elements['action_configureblockinstance_id_' . $this->get('id')] = array(
             'type' => 'submitcancel',
-            'subclass' => array('btn-secondary'),
+            'subclass' => array('btn-primary'),
             'value' => array(get_string('save'), $cancel),
             'goto' => View::make_base_url(),
         );
@@ -1769,7 +1770,7 @@ class BlockInstance {
         // Add submit/cancel buttons
         $elements['action_configureblockinstance_id_' . $this->get('id')] = array(
             'type' => 'submitcancel',
-            'class' => 'btn-secondary',
+            'class' => 'btn-primary',
             'value' => array(get_string('save'), get_string('cancel')),
             'goto' => View::make_base_url(),
         );

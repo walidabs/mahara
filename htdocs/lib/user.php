@@ -791,6 +791,18 @@ function email_user($userto, $userfrom, $subject, $messagetext, $messagehtml='',
                 }
             }
         }
+
+        $smtpallowselfsigned = get_config('smtpallowselfsigned');
+        $smtpverifypeer = get_config('smtpverifypeer');
+        if ($smtpallowselfsigned || ! $smtpverifypeer) {
+            $mail->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => $smtpverifypeer,
+                    'verify_peer_name' => $smtpverifypeer,
+                    'allow_self_signed' => $smtpallowselfsigned
+                )
+            );
+        }
     }
 
     if (get_config('bounces_handle') && !empty($userto->id) && empty($maildisabled)) {
@@ -2415,9 +2427,9 @@ function friendscontrol_submit(Pieform $form, $values) {
 }
 
 function acceptfriend_form($friendid, $modalmode='') {
-    $value = ($modalmode == 'modal' ? get_string('approverequest', 'group') : '<span class="icon icon-check icon-lg text-success left" role="presentation" aria-hidden="true"></span>' . get_string('approve', 'group'));
+    $value = ($modalmode == 'modal' ? get_string('approverequest', 'group') : '<span class="icon icon-check text-success left" role="presentation" aria-hidden="true"></span>' . get_string('approve', 'group'));
     $elementclass = $modalmode == 'modal' ? 'form-as-button' : 'form-as-button pull-left';
-    $class = $modalmode == 'modal' ? 'link-unstyled' : 'default btn-secondary';
+    $class = $modalmode == 'modal' ? 'link-unstyled' : 'default btn-secondary btn-sm first';
 
     return pieform(array(
         'name' => 'acceptfriend' . (int) $friendid,
@@ -2501,7 +2513,7 @@ function acceptfriend_submit(Pieform $form, $values) {
 
 // Form to add someone who has friendscontrol set to 'auto'
 function addfriend_form($friendid, $displaymode='') {
-    $value = $displaymode == 'pageactions' ? '<span class="icon icon-user-plus icon-lg left" role="presentation"></span>' : '<span class="icon icon-user-plus icon-lg left" role="presentation"></span>' . get_string('addtofriendslist', 'group');
+    $value = $displaymode == 'pageactions' ? '<span class="icon icon-user-plus left" role="presentation"></span>' : '<span class="icon icon-user-plus left" role="presentation"></span>' . get_string('addtofriendslist', 'group');
     return pieform(array(
         'name' => 'addfriend' . (int) $friendid,
         'validatecallback' => 'addfriend_validate',
@@ -3146,10 +3158,7 @@ function remote_avatar($email, $size, $notfound) {
         return $notfound;
     }
 
-    $baseurl = 'http://www.gravatar.com/avatar/';
-    if (is_https() === true) {
-        $baseurl = 'https://secure.gravatar.com/avatar/';
-    }
+    $baseurl = 'https://www.gravatar.com/avatar/';
     if (get_config('remoteavatarbaseurl')) {
         $baseurl = get_config('remoteavatarbaseurl');
     }

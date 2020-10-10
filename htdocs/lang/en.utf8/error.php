@@ -56,6 +56,7 @@ $string['dbconnfailed'] = 'Mahara could not connect to the application database.
 The error received was:
 ';
 $string['dbnotutf8'] = 'You are not using a UTF-8 database. Mahara stores all data as UTF-8 internally. Please drop and re-create your database using UTF-8 encoding.';
+$string['dbnotutf8mb4'] = 'You are not using a utf8mb4 Character Set (4-Byte UTF-8 Unicode Encoding) database. Mahara stores all data as utf8mb4 internally. Please drop and re-create your database using utf8mb4 encoding.';
 $string['dbversioncheckfailed'] = 'Your database server version is not new enough to successfully run Mahara. Your server is %s %s, but Mahara requires at least version %s.';
 $string['plpgsqlnotavailable'] = 'The PL/pgSQL language is not enabled in your Postgres installation, and Mahara cannot enable it. Please install PL/pgSQL in your database manually. For instructions on how to do this, see https://wiki.mahara.org/wiki/System_Administrator\'s_Guide/Enabling_Plpgsql';
 $string['mysqlnotriggerprivilege'] = 'Mahara requires permission to create database triggers, but is unable to do so. Please ensure that the trigger privilege has been granted to the appropriate user in your MySQL installation. For instructions on how to do this, see https://wiki.mahara.org/wiki/System_Administrator\'s_Guide/Granting_Trigger_Privilege';
@@ -103,6 +104,7 @@ $string['institutionprivacystatementnotfound'] = 'The privacy statement for "%s"
 $string['viewnotfoundexceptiontitle'] = 'Page not found';
 $string['viewnotfoundexceptionmessage'] = 'You tried to access a page that does not exist.';
 $string['viewnotfound'] = 'Page with id %s not found.';
+$string['collectionnotfound'] = 'Collection with id %s not found';
 $string['viewnotfoundbyname'] = 'Page %s by %s not found.';
 $string['youcannotviewthisusersprofile'] = 'You cannot view this profile.';
 $string['notinthesamegroup'] = 'You cannot view this profile because you are not members of the same group.';

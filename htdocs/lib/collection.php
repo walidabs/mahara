@@ -221,7 +221,7 @@ class Collection {
             }
             delete_records('tag', 'resourcetype', 'collection', 'resourceid', $this->get('id'));
             $tags = check_case_sensitive($this->get_tags(), 'tag');
-            foreach ($tags as $tag) {
+            foreach (array_unique($tags) as $tag) {
                 //truncate the tag before insert it into the database
                 $tag = substr($tag, 0, 128);
                 $tag = check_if_institution_tag($tag);
@@ -279,6 +279,13 @@ class Collection {
         $owner = isset($collectiondata['owner']) ? $collectiondata['owner'] : null;
         $group = isset($collectiondata['group']) ? $collectiondata['group'] : null;
         $institution = isset($collectiondata['institution']) ? $collectiondata['institution'] : null;
+
+        // if the owner of the template and the copy are the same, use the same file
+        $sameowner = ($template->get('owner') && $template->get('owner') == $owner) ||
+            ($template->get('group') && $template->get('group') == $group) ||
+            ($template->get('institution') && $template->get('institution') == $institution);
+        if ($sameowner) return $coverimageid;
+
         if ($coverimageid) {
             try {
                 $a = artefact_instance_from_id($coverimageid);
@@ -289,6 +296,15 @@ class Collection {
                       $institution
                     );
                 }
+                // move to cover image forlder
+                $userobj = null;
+                if ($owner) {
+                    $userobj = new User();
+                    $userobj->find_by_id($owner);
+                }
+                $newa = artefact_instance_from_id($newid);
+                $folderid = ArtefactTypeImage::get_coverimage_folder($userobj, $group, $institution);
+                $newa->move($folderid);
                 return $newid;
             }
             catch (Exception $e) {
@@ -363,7 +379,6 @@ class Collection {
             $data->owner = $userid;
         }
         $data->framework = $colltemplate->get('framework');
-        $data->coverimage = $colltemplate->get('coverimage');
         $data->submittedstatus = 0;
 
         $data->progresscompletion = $colltemplate->get('progresscompletion');
@@ -629,12 +644,10 @@ class Collection {
                 'description'  => get_string('coverimagedescription', 'view'),
                 'folder'       => $folder,
                 'highlight'    => $highlight,
-                'accept'       => 'image/jpg,image/png',
+                'accept'       => 'image/*',
                 'institution'  => $this->institution,
                 'group'        => $this->group,
-        //         // 'browse'       => $browse,
                 'page'         => '',
-        //         // 'browsehelp'   => 'browsemyfiles',
                 'filters'      => array(
                      'artefacttype' => array('image'),
                 ),
@@ -1368,8 +1381,9 @@ class Collection {
      * the submission item to the export queue ready for archiving.
      *
      * @param object $releaseuser The user releasing the collection
+     * @param string $externalid  An external ID that the archive relates to
      */
-    public function pendingrelease($releaseuser=null) {
+    public function pendingrelease($releaseuser=null, $externalid=null) {
         $submitinfo = $this->submitted_to();
         if (!$this->is_submitted()) {
             throw new ParameterException("Collection with id " . $this->id . " has not been submitted");
@@ -1385,7 +1399,7 @@ class Collection {
         db_commit();
 
         require_once(get_config('docroot') . 'export/lib.php');
-        add_submission_to_export_queue($this, $releaseuser);
+        add_submission_to_export_queue($this, $releaseuser, $externalid);
     }
 
     /**

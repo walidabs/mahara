@@ -120,7 +120,7 @@ if ($views) {
                     'usebuttontag' => true,
                     'class' => 'btn-link btn-sm',
                     'confirm' => get_string('viewconfirmremove', 'collection'),
-                    'value' => '<span class="icon icon-times icon-lg text-danger" role="presentation" aria-hidden="true"><span class="sr-only">' . get_string('remove') . '</span></span>',
+                    'value' => '<span class="icon icon-times text-danger" role="presentation" aria-hidden="true"><span class="sr-only">' . get_string('remove') . '</span></span>',
                 ),
             ),
         ));
@@ -148,10 +148,10 @@ if ($available = Collection::available_views($owner, $groupid, $institutionname)
     );
 
     $elements['submit'] = array(
-        'class' => 'btn-primary float-right add-pages',
+        'class' => 'btn-secondary float-right add-pages',
         'type' => 'button',
         'usebuttontag' => true,
-        'value' => '<span class="icon icon-arrow-right left" role="presentation" aria-hidden="true"></span>' . get_string('addviews','collection'),
+        'value' => '<span class="icon icon-plus left" role="presentation" aria-hidden="true"></span>' . get_string('addviews','collection'),
         'goto' => get_config('wwwroot') . 'collection/views.php?id='.$id,
     );
 

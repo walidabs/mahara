@@ -881,8 +881,8 @@ function export_process_queue($id = false) {
  * Would be useful if we need to do special checking/handling of these compared to normal exports.
  * Currently only passes thru the variables.
  */
-function add_submission_to_export_queue($object, $submitter) {
-    return export_add_to_queue($object, null, $submitter);
+function add_submission_to_export_queue($object, $submitter, $external=null) {
+    return export_add_to_queue($object, $external, $submitter);
 }
 
 /**
@@ -934,7 +934,8 @@ function create_zip_archive($exportdir, $filename, $files) {
                 $archive->addFile($exportdir . $file, $file);
             }
             else {
-                $directories[] = $file . '/';
+                if (substr($file, -1) != "/") $file = $file . '/';
+                $directories[] = $file;
             }
         }
         // add the contents of all directories and subdirectories

@@ -891,7 +891,7 @@ class View {
             }
             $this->tags = check_case_sensitive($this->tags, 'tag');
             delete_records('tag', 'resourcetype', 'view', 'resourceid', $this->get('id'));
-            foreach ($this->get_tags() as $tag) {
+            foreach (array_unique($this->get_tags()) as $tag) {
                 //truncate the tag before insert it into the database
                 $tag = substr($tag, 0, 128);
                 $tag = check_if_institution_tag($tag);
@@ -1646,7 +1646,7 @@ class View {
         return null;
     }
 
-    public function pendingrelease($releaseuser=null) {
+    public function pendingrelease($releaseuser=null, $externalid=null) {
         $submitinfo = $this->submitted_to();
         if (is_null($submitinfo)) {
             throw new ParameterException("View with id " . $this->get('id') . " has not been submitted");
@@ -1654,7 +1654,7 @@ class View {
         db_begin();
         self::_db_pendingrelease(array($this->get('id')));
         require_once(get_config('docroot') . 'export/lib.php');
-        add_submission_to_export_queue($this, $releaseuser);
+        add_submission_to_export_queue($this, $releaseuser, $externalid);
         db_commit();
     }
 
@@ -4295,7 +4295,7 @@ class View {
                          'submit' => array(
                             'type' => 'button',
                             'usebuttontag' => true,
-                            'class' => 'btn-primary input-group-append no-label',
+                            'class' => 'btn-secondary input-group-append no-label',
                             'value' => get_string('search')
                         )
                     )
@@ -7563,7 +7563,7 @@ function create_view_form($group=null, $institution=null, $template=null, $colle
                 'type'  => 'button',
                 'usebuttontag' => true,
                 'class' => 'btn-secondary',
-                'value' => '<span class="icon icon-plus icon-lg left" role="presentation" aria-hidden="true"></span>' . get_string('createview', 'view'),
+                'value' => '<span class="icon icon-plus left" role="presentation" aria-hidden="true"></span>' . get_string('createview', 'view'),
             )
         )
     );
@@ -7603,10 +7603,7 @@ function create_view_form($group=null, $institution=null, $template=null, $colle
             'value' => $template,
         );
         $form['elements']['submit']['value'] = get_string('copyview', 'view');
-        $form['elements']['submit']['class'] = 'btn-secondary btn-sm btn-group-item';
-        if ($collection !== null) {
-            $form['elements']['submit']['class'] .= ' last';
-        }
+        $form['elements']['submit']['class'] = 'btn-secondary btn-sm btn-group-item text-inline';
         $form['name'] .= $template;
     }
     if ($collectiononly) {

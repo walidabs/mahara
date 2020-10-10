@@ -27,9 +27,9 @@
 {/if}
 
 {if $sharedviews}
-    <h4 class="title">
+    <h3 class="title">
         {str tag="viewssharedtogroup" section="view"}:
-    </h4>
+    </h3>
     {if $sharedviews.count > 0}
         <ul id="sharedviewlist" class="list-group list-group-top-border grouppages">
             {$sharedviews.tablerows|safe}
@@ -51,16 +51,16 @@
         {/if}
     {else}
         <div class="list-group list-group-top-border grouppages">
-            <span class="list-group-item flush lead text-small">{str tag=nosharedviewsyet section=view}</span>
+            <span class="list-group-item flush">{str tag=nosharedviewsyet section=view}</span>
         </div>
     {/if}
 {/if}
 
 
 {if $sharedcollections}
-    <h4 class="title">
+    <h3 class="title">
         {str tag="collectionssharedtogroup" section="collection"}:
-    </h4>
+    </h3>
     {if $sharedcollections.count > 0}
         <ul id="sharedcollectionlist" class="list-group list-group-top-border grouppages">
             {$sharedcollections.tablerows|safe}
@@ -82,15 +82,15 @@
         {/if}
     {else}
         <div class="list-group list-group-top-border grouppages">
-            <div class="list-group-item flush lead text-small">{str tag=nosharedcollectionsyet section=collection}</div>
+            <div class="list-group-item flush">{str tag=nosharedcollectionsyet section=collection}</div>
         </div>
     {/if}
 {/if}
 
 {if $allsubmitted}
-    <h4 class="title">
+    <h3 class="title">
         {str tag="submissionstogroup" section="view"}:
-    </h4>
+    </h3>
     {if $allsubmitted.count > 0}
         <ul id="allsubmissionlist" class="list-group list-group-top-border grouppages">
             {$allsubmitted.tablerows|safe}
@@ -110,14 +110,14 @@
         {/if}
     {else}
         <div class="list-group list-group-top-border grouppages">
-            <div class="list-group-item flush lead text-small">{str tag=nosubmittedviewscollectionsyet section=view}</span>
+            <div class="list-group-item flush">{str tag=nosubmittedviewscollectionsyet section=view}</span>
         </div>
     {/if}
 {/if}
 {if $nosubmissions}
-    <h4 class="title">
+    <h3 class="title">
         {str tag="nosubmissionsfrom" section="view"}:
-    </h4>
+    </h3>
     <ul id="nosubmissionslist" class="list-group list-group-top-border grouppages">
         {$nosubmissions.tablerows|safe}
     </ul>
@@ -137,13 +137,13 @@
 {/if}
 
 {if $mysubmitted || $group_view_submission_form}
-    <h4 class="title">
+    <h3 class="title">
         {if $group_view_submission_form}
             {str tag="submittogroup" section="view"}:
         {else}
             {str tag="yoursubmissions" section="view"}:
         {/if}
-    </h4>
+    </h3>
     <ul id="groupviewlist" class="list-group list-group-top-border grouppages">
         {if $mysubmitted}
             {foreach from=$mysubmitted item=item}

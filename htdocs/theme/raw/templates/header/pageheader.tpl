@@ -27,7 +27,7 @@
                                 {/if}
                                 <div class="form-group">
                                 <a id="review_link" class="btn btn-secondary" href="#" data-toggle="modal" data-target="#review-form">
-                                    <span class="icon icon-lg icon-flag text-danger left" role="presentation" aria-hidden="true"></span>
+                                    <span class="icon icon-flag text-danger left" role="presentation" aria-hidden="true"></span>
                                     {str tag=objectionreview}
                                 </a>
                                 </div>
@@ -38,6 +38,7 @@
                         <h1 id="viewh1" class="page-header">
                             {if $title}
                                 <span class="subsection-heading">{$title|safe}</span>
+                                {if $collectiontitle}<span class="sr-only">{str tag=pageincollectiontitle section=collection arg1=$collectiontitle|safe}</span>{/if}
                             {else}
                                 <span class="section-heading">{$maintitle|safe}</span>
                             {/if}
@@ -50,7 +51,7 @@
                         </div>
                         {/if}
 
-                        <div class="text-small font-weight-thin">
+                        <div class="text-small">
                             {include file=author.tpl}
 
                             {if $alltags}

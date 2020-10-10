@@ -33,9 +33,19 @@ foreach ($institutions as $institution) {
 }
 
 $services = get_records_array('external_services', 'restrictedusers', 0);
+$disabledopts = array();
 $sopts = array();
 foreach ($services as $service) {
     $sopts[$service->id] = $service->name;
+    $disabledopts[$service->id] = array();
+    if (substr_count($service->component, '/') > 0) {
+        list($moduletype, $module) = explode("/", $service->component);
+        safe_require_plugin($moduletype, $module);
+        $classname = generate_class_name($moduletype, $module);
+        if (is_callable(array($classname, 'disable_webservice_fields'))) {
+            $disabledopts[$service->id] = call_static_method($classname, 'disable_webservice_fields');
+        }
+    }
 }
 
 // we have a service config form
@@ -59,7 +69,7 @@ else {
 }
 
 function webservices_add_application_submit(Pieform $form, $values) {
-    global $SESSION, $USER;
+    global $SESSION, $USER, $services;
 
     $dbuser = get_record('usr', 'id', $USER->get('id'));
     if (empty($dbuser)) {
@@ -69,14 +79,24 @@ function webservices_add_application_submit(Pieform $form, $values) {
     $store = OAuthStore::instance();
 
     $new_app = array(
-                'application_title' => $values['application'],
-                'application_uri'   => 'http://example.com',
-                'requester_name'    => $dbuser->firstname . ' ' . $dbuser->lastname,
-                'requester_email'   => $dbuser->email,
-                'callback_uri'      => 'http://example.com',
-                'institution'       => $values['institution'],
-                'externalserviceid' => $values['service'],
-      );
+        'application_title' => $values['application'],
+        'application_uri'   => 'http://example.com',
+        'requester_name'    => $dbuser->firstname . ' ' . $dbuser->lastname,
+        'requester_email'   => $dbuser->email,
+        'callback_uri'      => 'http://example.com',
+        'institution'       => $values['institution'],
+        'externalserviceid' => $values['service'],
+    );
+    foreach ($services as $k => $service) {
+        if ($service->id == $values['service'] && isset($service->component)) {
+            list($moduletype, $module) = get_module_from_serverid($service->id);
+            safe_require_plugin($moduletype, $module);
+            $classname = generate_class_name($moduletype, $module);
+            if (is_callable(array($classname, 'add_application'))) {
+                $new_app = call_static_method($classname, 'add_application', $new_app);
+            }
+        }
+    }
     $key = $store->updateConsumer($new_app, $dbuser->id, true);
     $c = (object) $store->getConsumer($key, $dbuser->id, true);
     if (empty($c)) {
@@ -196,11 +216,13 @@ function webservice_main_submit(Pieform $form, $values) {
 }
 
 function webservice_server_edit_form($dbserver, $sopts, $iopts, $disabled = array()) {
-    global $USER;
+    global $USER, $disabledopts;
 
     $server_details =
         array(
             'name'             => 'webservice_oauth_server',
+            'plugintype'  => 'core',
+            'pluginname'  => 'webservices',
             'validatecallback' => 'webservice_oauth_server_validate',
             'successcallback'  => 'webservice_oauth_server_submit',
             'jsform'           => false,
@@ -268,6 +290,7 @@ function webservice_server_edit_form($dbserver, $sopts, $iopts, $disabled = arra
         'defaultvalue' =>  $dbserver->application_uri,
         'type'         => 'text',
         'disabled'     => (isset($disabled['application_uri']) ? true : false),
+        'help'         => true,
     );
 
     $server_details['elements']['callback_uri'] = array(
@@ -310,6 +333,30 @@ function webservice_server_edit_form($dbserver, $sopts, $iopts, $disabled = arra
         'title'        => get_string('functions', 'auth.webservice'),
         'value'        => '<div class="align-with-input">' . implode(', ', $function_list) . '</div>',
         'type'         => 'html',
+    );
+
+    $disabledoptstr = json_encode($disabledopts);
+    $server_details['elements']['disabledopts'] = array(
+        'type' => 'html',
+        'value' => '<script>var disopts = ' . $disabledoptstr . ';
+                            var selectedservice;
+        jQuery(function($) {
+            function update_service(service) {
+               $("#webservice_oauth_server input").each(function() {
+                   $(this).prop("disabled", false);
+               });
+               $.each(disopts[service], function (k, v) {
+                   $("#webservice_oauth_server_" + k).prop("disabled", true);
+               });
+            }
+            $("#webservice_oauth_server_service").change(function() {
+                selectedservice = $(this).children("option:selected").val();
+                update_service(selectedservice);
+            });
+            selectedservice = $("#webservice_oauth_server_service").children("option:selected").val();
+            update_service(selectedservice);
+        });
+        </script>',
     );
 
     $server_details['elements']['submit'] = array(
@@ -486,7 +533,7 @@ function webservice_server_list_form($sopts, $iopts) {
                                 'type' => 'button',
                                 'usebuttontag' => true,
                                 'class' => 'btn-secondary btn-sm',
-                                'value' => '<span class="icon icon-pencil-alt icon-lg" role="presentation" aria-hidden="true"></span><span class="sr-only">' . get_string('editspecific', 'mahara', $consumer->application_title) . '</span>',
+                                'value' => '<span class="icon icon-pencil-alt" role="presentation" aria-hidden="true"></span><span class="sr-only">' . get_string('editspecific', 'mahara', $consumer->application_title) . '</span>',
                                 'elementtitle' => get_string('editspecific', 'mahara', $consumer->application_title),
                             ),
                         ),
@@ -506,7 +553,7 @@ function webservice_server_list_form($sopts, $iopts) {
                                 'type' => 'button',
                                 'usebuttontag' => true,
                                 'class' => 'btn-secondary btn-sm',
-                                'value' => '<span class="icon icon-trash-alt icon-lg text-danger" role="presentation" aria-hidden="true"></span><span class="sr-only">'.get_string('deletespecific', 'mahara', $consumer->application_title).'</span>',
+                                'value' => '<span class="icon icon-trash-alt text-danger" role="presentation" aria-hidden="true"></span><span class="sr-only">'.get_string('deletespecific', 'mahara', $consumer->application_title).'</span>',
                                 'elementtitle' => get_string('deletespecific', 'mahara', $consumer->application_title),
                             ),
                         ),
@@ -515,44 +562,47 @@ function webservice_server_list_form($sopts, $iopts) {
                 'key' => $consumer->consumer_key,
                 'class' => 'webserviceconfigcontrols btn-group icon-cell',
             );
-
             // Check if service has extra settings
-            if ($consumer->component) {
-                list($moduletype, $module) = explode("/", $consumer->component);
+            if ($consumer_functions = get_records_sql_array("
+                SELECT ef.component FROM {external_services_functions} esf
+                JOIN {external_functions} ef ON ef.name = esf.functionname
+                WHERE esf.externalserviceid = ?
+                AND ef.hasconfig = ?", array($consumer->externalserviceid, 1))) {
+                    $hasconfig = false;
+                    foreach ($consumer_functions as $cf) {
+                        list($moduletype, $module) = explode("/", $cf->component);
 
-                $hasconfig = false;
+                        if (safe_require_plugin($moduletype, $module)) {
+                            $classname = generate_class_name($moduletype, $module);
+                            if (is_callable(array($classname, 'has_oauth_service_config'))) {
+                                $hasconfig = call_static_method($classname, 'has_oauth_service_config');
+                            }
+                        }
 
-                if (safe_require_plugin($moduletype, $module)) {
-                    $classname = generate_class_name($moduletype, $module);
-                    if (is_callable(array($classname, 'has_oauth_service_config'))) {
-                        $hasconfig = call_static_method($classname, 'has_oauth_service_config');
+                        if ($hasconfig) {
+                            $form['elements']['id' . $consumer->id . '_actions']['value'] .=
+                                pieform(array(
+                                    'name' => 'webservices_server_config_' . $consumer->id,
+                                    'renderer' => 'div',
+                                    'class' => 'form-as-button float-left',
+                                    'elementclasses' => false,
+                                    'successcallback' => 'webservices_server_submit',
+                                    'jsform' => false,
+                                    'elements' => array(
+                                        'token' => array('type' => 'hidden', 'value' => $consumer->id),
+                                        'action' => array('type' => 'hidden', 'value' => 'config'),
+                                        'submit' => array(
+                                            'type' => 'button',
+                                            'usebuttontag' => true,
+                                            'class' => 'btn-secondary btn-sm',
+                                            'value' => '<span class="icon icon-cog" role="presentation" aria-hidden="true"></span><span class="sr-only">'.get_string('managespecific', 'mahara', $consumer->application_title).'</span>',
+                                            'elementtitle' => get_string('managespecific', 'mahara', $consumer->application_title),
+                                        ),
+                                    ),
+                                ));
+                        }
                     }
-                }
-
-                if ($hasconfig) {
-                    $form['elements']['id' . $consumer->id . '_actions']['value'] .=
-                        pieform(array(
-                            'name' => 'webservices_server_config_' . $consumer->id,
-                            'renderer' => 'div',
-                            'class' => 'form-as-button float-left',
-                            'elementclasses' => false,
-                            'successcallback' => 'webservices_server_submit',
-                            'jsform' => false,
-                            'elements' => array(
-                                'token' => array('type' => 'hidden', 'value' => $consumer->id),
-                                'action' => array('type' => 'hidden', 'value' => 'config'),
-                                'submit' => array(
-                                    'type' => 'button',
-                                    'usebuttontag' => true,
-                                    'class' => 'btn-secondary btn-sm',
-                                    'value' => '<span class="icon icon-cog icon-lg " role="presentation" aria-hidden="true"></span><span class="sr-only">'.get_string('managespecific', 'mahara', $consumer->application_title).'</span>',
-                                    'elementtitle' => get_string('managespecific', 'mahara', $consumer->application_title),
-                                ),
-                            ),
-                        ));
-                }
             }
-
         }
 
         $pieform = pieform_instance($form);
@@ -719,8 +769,10 @@ function get_module_from_serverid($serverid) {
             JOIN {external_services} es
                 ON es.id = osr.externalserviceid
             WHERE osr.id = ? ', array($serverid));
-    if (substr_count($consumer->component, '/') > 0) {
-        return explode("/", $consumer->component);
+    if ($consumer) {
+        if (substr_count($consumer->component, '/') > 0) {
+            return explode("/", $consumer->component);
+        }
     }
     return array('auth', 'webservice');
 }

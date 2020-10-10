@@ -1275,7 +1275,7 @@
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
                 <FIELD NAME="archiveid" TYPE="int" LENGTH="10" NOTNULL="true" />
-                <FIELD NAME="group" TYPE="int" LENGTH="10" NOTNULL="true" />
+                <FIELD NAME="group" TYPE="int" LENGTH="10" NOTNULL="false" />
                 <FIELD NAME="externalhost" TYPE="char" LENGTH="50" NOTNULL="false" />
                 <FIELD NAME="externalid" TYPE="char" LENGTH="255" NOTNULL="false" />
             </FIELDS>
@@ -1287,7 +1287,7 @@
         </TABLE>
         <TABLE NAME="client_connections_institution">
             <FIELDS>
-                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="plugintype" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"  COMMENT="Plugin type eg: notification"/>
                 <FIELD NAME="pluginname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"  COMMENT="Plugin type eg: log"/>
@@ -1390,6 +1390,7 @@
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+                <KEY NAME="taguk" TYPE="unique" FIELDS="tag,resourcetype,resourceid" />
                 <KEY NAME="editedbyfk" TYPE="foreign" FIELDS="editedby" REFTABLE="usr" REFFIELDS="id" />
             </KEYS>
         </TABLE>
@@ -1484,6 +1485,18 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="view" />
                 <KEY NAME="viewfk" TYPE="foreign" FIELDS="view" REFTABLE="view" REFFIELDS="id"/>
                 <KEY NAME="templatefk" TYPE="foreign" FIELDS="originaltemplate" REFTABLE="view" REFFIELDS="id"/>
+            </KEYS>
+        </TABLE>
+        <TABLE NAME="client_connections_config">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+                <FIELD NAME="connection" TYPE="int" LENGTH="10" NOTNULL="true" />
+                <FIELD NAME="field" TYPE="char" LENGTH="100" NOTNULL="true" />
+                <FIELD NAME="value" TYPE="text" LENGTH="small" NOTNULL="true" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+                <KEY NAME="ccifk" TYPE="foreign" FIELDS="connection" REFTABLE="client_connections_institution" REFFIELDS="id" />
             </KEYS>
         </TABLE>
     </TABLES>

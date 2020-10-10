@@ -138,8 +138,6 @@ $string['viewwidth'] = 'Page width';
 $string['textfontfamily'] = 'Text font';
 $string['headingfontfamily'] = 'Heading font';
 $string['fontsize'] = 'Font size';
-$string['fontsizesmallest'] = 'smallest';
-$string['fontsizesmaller'] = 'smaller';
 $string['fontsizesmall'] = 'small';
 $string['fontsizemedium'] = 'medium';
 $string['fontsizelarge'] = 'large';
@@ -181,7 +179,7 @@ $string['manageskins'] = 'Manage skins';
 /* SKINS - SITE FONTS */
 $string['sitefontsmenu'] = 'Fonts';
 $string['sitefonts'] = 'Fonts';
-$string['sitefontsdescription'] = '<p>The following fonts have been installed on your site for use in skins.</p>';
+$string['sitefontsdescription'] = 'The following fonts have been installed on your site for use in skins.';
 $string['installfontinstructions'] = '<p>
 Add fonts, which allow font embedding into web pages, via the CSS @font-face rule. Remember that not all authors / foundries allow this.
 </p>
@@ -263,6 +261,7 @@ $string['fonttype.t_raw'] = 'Theme font: Raw';
 $string['fonttype.t_ocean'] = 'Theme font: Ocean';
 $string['fonttype.t_modern'] = 'Theme font: Modern';
 $string['fonttype.t_primaryschool'] = 'Theme font: Primary school';
+$string['fonttype.t_maroon'] = 'Theme font: Maroon';
 
 // For examples of pangrams, see: http://en.wikipedia.org/wiki/List_of_pangrams
 $string['preview'] = 'Preview';
