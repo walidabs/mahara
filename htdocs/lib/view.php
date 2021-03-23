@@ -885,7 +885,7 @@ class View {
             }
             $this->tags = check_case_sensitive($this->tags, 'tag');
             delete_records('tag', 'resourcetype', 'view', 'resourceid', $this->get('id'));
-            foreach ($this->get_tags() as $tag) {
+            foreach (array_unique($this->get_tags()) as $tag) {
                 //truncate the tag before insert it into the database
                 $tag = substr($tag, 0, 128);
                 $tag = check_if_institution_tag($tag);
@@ -2690,7 +2690,9 @@ class View {
                 );
                 foreach($instancejs as $jsfile) {
                   if (is_array($jsfile) && isset($jsfile['file'])) {
-                    $javascriptfiles[] = $this->add_blocktype_path($blockinstance, $jsfile['file']);
+                    if (!empty($jsfile['file'])) {
+                      $javascriptfiles[] = $this->add_blocktype_path($blockinstance, $jsfile['file']);
+                    }
                     if (isset($jsfile['initjs'])) {
                       $initjavascripts[] = $jsfile['initjs'];
                     }
@@ -2700,8 +2702,8 @@ class View {
                       }
                     }
                   }
-                  else if (is_string($jsfile)) {
-                    $javascriptfiles[] = $this->add_blocktype_path($blockinstance, $jsfile);;
+                  else if (is_string($jsfile) && !empty($jstring)) {
+                    $javascriptfiles[] = $this->add_blocktype_path($blockinstance, $jsfile);
                   }
                 }
                 // Check to see if we need to include the block Ajax file.

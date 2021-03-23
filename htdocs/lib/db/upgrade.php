@@ -1700,5 +1700,80 @@ function xmldb_core_upgrade($oldversion=0) {
         }
     }
 
+    // set customethemeupdate to true for Bug 1893159s
+    if ($oldversion < 2020013011) {
+        $custom_themes = get_records_sql_array("SELECT name FROM {institution} WHERE theme = ?", array('custom'));
+        if ($custom_themes) {
+            log_debug('Setting update flag for custom themes');
+            // set_config_institution requires the Institution class.
+            require_once(get_config('docroot') . 'lib/institution.php');
+            foreach ($custom_themes as $inst) {
+                set_config_institution($inst->name, 'customthemeupdate', true);
+            }
+        }
+    }
+
+    if ($oldversion < 2020013012) {
+        log_debug('Adding unique key to tag table');
+        $table = new XMLDBTable('tag');
+        // Add the new unique index
+        $index = new XMLDBIndex('taguk');
+        $index->setAttributes(XMLDB_INDEX_UNIQUE, array('tag', 'resourcetype', 'resourceid'));
+        if (!index_exists($table, $index)) {
+            // make sure there are no doubleups in tags
+            if ($taginfo = get_records_sql_array("SELECT tag, resourcetype, resourceid, ownertype, ownerid
+                                                   FROM {tag}
+                                                   GROUP BY tag, resourcetype, resourceid, ownertype, ownerid
+                                                   HAVING COUNT(*) > 1")) {
+                // we have duplicates so we need to delete all but the first one
+                foreach ($taginfo as $tag) {
+                    $ids = get_column_sql("SELECT t.id FROM {tag} t WHERE t.tag = ? AND t.resourcetype = ?
+                                           AND t.resourceid = ? AND t.ownertype = ? AND t.ownerid = ?",
+                                          array($tag->tag, $tag->resourcetype, $tag->resourceid, $tag->ownertype, $tag->ownerid));
+                    array_shift($ids);
+                    execute_sql("DELETE FROM {tag} WHERE id IN (" . implode(', ', $ids) . ")");
+                }
+            }
+            add_index($table, $index);
+        }
+    }
+
+    if ($oldversion < 2020013015) {
+        log_debug('Adjust navigation block on collection pages in old format');
+        // Find all the pages that have a navigation block on them and the navigation block is saved with information in
+        // the block_instance_dimension table that also have other blocks on the page that don't have information in the
+        // block_inatance_dimension table - indicating that the navigation block was saved wrong and needs fixing up
+        if ($records = get_records_sql_array("SELECT abi.view, (
+                                                  SELECT COUNT(*) FROM {block_instance} bbi WHERE bbi.view = abi.view
+                                              ) AS block_count,
+                                              COUNT(abid.block) AS block_dimension_count
+                                              FROM {block_instance_dimension} abid
+                                              JOIN {block_instance} abi ON abi.id = abid.block
+                                              WHERE abi.view IN (
+                                                  SELECT bi.view FROM {block_instance} bi
+                                                  JOIN {block_instance_dimension} bid ON bid.block = bi.id
+                                                  WHERE bi.blocktype = 'navigation'
+                                              )
+                                              GROUP BY abi.view HAVING COUNT(abid.block) = 1
+                                              AND (
+                                                   SELECT COUNT(*) FROM {block_instance} bbi WHERE bbi.view = abi.view
+                                              ) > 1")) {
+            foreach ($records as $record) {
+                // Now find the block id that needs fixing
+                $blockid = get_field_sql("SELECT b.block FROM {block_instance_dimension} b
+                                          WHERE b.block IN (
+                                              SELECT id FROM {block_instance} WHERE view = ?
+                                          )", array($record->view));
+                // Update it with old layout info
+                $order = get_field_sql("SELECT MAX(bi.order) + 1 FROM {block_instance} bi WHERE bi.view = ?", array($record->view));
+                execute_sql("UPDATE {block_instance}
+                             SET \"row\" = ?, \"column\" = ?, \"order\" = ?
+                             WHERE id = ?", array(1, 1, $order, $blockid));
+                // Remove the new dimension info
+                execute_sql("DELETE FROM {block_instance_dimension} WHERE block = ?", array($blockid));
+            }
+        }
+    }
+
     return $status;
 }

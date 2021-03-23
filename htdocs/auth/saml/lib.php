@@ -382,36 +382,37 @@ class AuthSaml extends Auth {
                 if (!get_field('usr_institution', 'ctime', 'usr', $user->id, 'institution', $institutionname)) {
                     require_once('institution.php');
                     $institution = new Institution($institutionname);
-                    if ($institutionrole == 'admin') {
+                    if (!empty($roles) && $institutionrole == 'admin') {
                         $institution->addUserAsStaff($user);
                     }
-                    else if ($institutionrole == 'staff') {
+                    else if (!empty($roles) && $institutionrole == 'staff') {
                         $institution->addUserAsStaff($user);
                     }
                     else {
+                        // if no roles then always add as a normal member
                         $institution->addUserAsMember($user);
                     }
                 }
                 else {
-                    if ($institutionrole == 'admin') {
+                    if (!empty($roles) && $institutionrole == 'admin') {
                         set_field('usr_institution', 'admin', 1, 'usr', $user->id, 'institution', $institutionname);
                         set_field('usr_institution', 'staff', 0, 'usr', $user->id, 'institution', $institutionname);
                     }
-                    else if ($institutionrole == 'staff') {
+                    else if (!empty($roles) && $institutionrole == 'staff') {
                         set_field('usr_institution', 'admin', 0, 'usr', $user->id, 'institution', $institutionname);
                         set_field('usr_institution', 'staff', 1, 'usr', $user->id, 'institution', $institutionname);
                     }
-                    else {
+                    else if (!empty($roles) && $institutionrole == 'member') {
                         set_field('usr_institution', 'admin', 0, 'usr', $user->id, 'institution', $institutionname);
                         set_field('usr_institution', 'staff', 0, 'usr', $user->id, 'institution', $institutionname);
                     }
                 }
             }
-            if (empty($usr_is_siteadmin)) {
+            if (!empty($roles) && empty($usr_is_siteadmin)) {
                 // make sure they are not site admin anymore
                 $user->admin = 0;
             }
-            if (empty($usr_is_sitestaff)) {
+            if (!empty($roles) && empty($usr_is_sitestaff)) {
                 // make sure they are not site staff anymore
                 $user->staff = 0;
             }
@@ -881,7 +882,7 @@ class PluginAuthSaml extends PluginAuth {
         }
         else {
             require(get_config('docroot') .'auth/saml/extlib/simplesamlphp/vendor/autoload.php');
-            $config = SimpleSAML_Configuration::getInstance();
+            $config = SimpleSAML\Configuration::getInstance();
 
             //simplesaml version we install with 'make ssphp'
             $libversion = get_config_plugin('auth', 'saml', 'version');
@@ -1144,7 +1145,7 @@ class PluginAuthSaml extends PluginAuth {
         require_once(get_config('docroot') . 'auth/saml/extlib/simplesamlphp/vendor/autoload.php');
         require_once(get_config('docroot') . 'auth/saml/extlib/_autoload.php');
 
-        SimpleSAML_Configuration::init(get_config('docroot') . 'auth/saml/config');
+        SimpleSAML\Configuration::init(get_config('docroot') . 'auth/saml/config');
     }
 
     public static function get_idps($xml) {
@@ -1651,14 +1652,15 @@ EOF;
                 if ($rawxml != $values['institutionidp']) {
                     $changedxml = true;
                     // find out which institutions are using it
-                    if ($duplicates = get_records_sql_array("
+                    $duplicates = get_records_sql_array("
                         SELECT COUNT(aic.instance) AS instances
                         FROM {auth_instance_config} aic
                         JOIN {auth_instance} ai ON (ai.authname = 'saml' AND ai.id = aic.instance)
                         WHERE aic.field = 'institutionidpentityid' AND aic.value = ? AND aic.instance != ?",
-                        array($values['institutionidpentityid'], $values['instance'])) && $duplicates[0]->instances > 0) {
-                            $SESSION->add_ok_msg(get_string('idpentityupdatedduplicates', 'auth.saml', $duplicates[0]->instances));
-                        }
+                        array($values['institutionidpentityid'], $values['instance']));
+                    if ($duplicates && is_array($duplicates) && $duplicates[0]->instances > 0) {
+                        $SESSION->add_ok_msg(get_string('idpentityupdatedduplicates', 'auth.saml', $duplicates[0]->instances));
+                    }
                     else {
                         $SESSION->add_ok_msg(get_string('idpentityupdated', 'auth.saml'));
                     }
@@ -1845,8 +1847,8 @@ if ($discofileexists && class_exists('SimpleSAML\XHTML\IdPDisco')) {
             assert('is_string($instance)');
 
             // initialize standard classes
-            $this->config = SimpleSAML_Configuration::getInstance();
-            $this->metadata = SimpleSAML_Metadata_MetaDataStorageHandler::getMetadataHandler();
+            $this->config = SimpleSAML\Configuration::getInstance();
+            $this->metadata = SimpleSAML\Metadata\MetaDataStorageHandler::getMetadataHandler();
             $this->instance = $instance;
             $this->metadataSets = $metadataSets;
             $this->isPassive = false;
@@ -1930,8 +1932,8 @@ class Metarefresh {
             //Include autoloader and setup config dir correctly
             PluginAuthSaml::init_simplesamlphp();
 
-            $config = SimpleSAML_Configuration::getInstance();
-            $mconfig = SimpleSAML_Configuration::getOptionalConfig('config-metarefresh.php');
+            $config = SimpleSAML\Configuration::getInstance();
+            $mconfig = SimpleSAML\Configuration::getOptionalConfig('config-metarefresh.php');
 
             $sets = $mconfig->getConfigList('sets', array());
 
@@ -1954,7 +1956,7 @@ class Metarefresh {
                 $outputDir = $config->resolvePath($outputDir);
                 $outputFormat = $set->getValueValidate('outputFormat', array('flatfile', 'serialize'), 'flatfile');
 
-                $oldMetadataSrc = SimpleSAML_Metadata_MetaDataStorageSource::getSource(array(
+                $oldMetadataSrc = SimpleSAML\Metadata\MetaDataStorageSource::getSource(array(
                     'type' => $outputFormat,
                     'directory' => $outputDir,
                 ));
@@ -2024,7 +2026,7 @@ class Metarefresh {
                 }
 
                 if ($set->hasValue('arp')) {
-                    $arpconfig = SimpleSAML_Configuration::loadFromArray($set->getValue('arp'));
+                    $arpconfig = SimpleSAML\Configuration::loadFromArray($set->getValue('arp'));
                     $metaloader->writeARPfile($arpconfig);
                 }
             }

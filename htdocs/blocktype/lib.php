@@ -1003,7 +1003,7 @@ class BlockInstance {
         }
         $this->tags = check_case_sensitive($tags, 'tag');
         delete_records('tag', 'resourcetype', 'blocktype', 'resourceid', $this->get('id'));
-        foreach ($this->tags as $tag) {
+        foreach (array_unique($this->tags) as $tag) {
             // truncate the tag before insert it into the database
             $tag = substr($tag, 0, 128);
             $tag = check_if_institution_tag($tag);
@@ -1278,10 +1278,8 @@ class BlockInstance {
             $configdata = $this->get('configdata');
             if (isset($configdata['retractable']) && $configdata['retractable']) {
                 $smarty->assign('retractable', true);
-                if (defined('JSON') || $jsreply) {
-                    $jssmarty = smarty_core();
-                    $jssmarty->assign('id', $this->get('id'));
-                    $js .= $jssmarty->fetch('view/retractablejs.tpl');
+                if (isset($configdata['retractedonload']) && $configdata['retractedonload']) {
+                    $smarty->assign('retractedonload', true);
                 }
             }
         }
